@@ -10,3 +10,6 @@ node_modules/
 # Configuración local de Claude Code (launch.json sí se versiona)
 .claude/*
 !.claude/launch.json
+# Página generada por el build de Vercel (tools/vercel-publico.mjs)
+publico/
+.vercel/

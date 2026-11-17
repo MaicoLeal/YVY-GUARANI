@@ -18,13 +18,17 @@
 
   // ---------- conexión con el servidor ----------
 
-  var server = { rev: 0, setupRequired: false, me: null, viewAs: null, online: true, loaded: false };
+  var server = { rev: 0, setupRequired: false, setupCode: false, eventos: 'vivo', me: null, viewAs: null, online: true, loaded: false, problem: '' };
   var pendingRefresh = false;
+  var eventsOn = false;
 
   function apply(snap) {
     state = snap.view;
     server.rev = snap.rev;
     server.setupRequired = !!snap.setupRequired;
+    server.setupCode = !!snap.setupCode;
+    server.eventos = snap.eventos || 'vivo';
+    server.problem = '';
     server.me = snap.me || null;
     server.viewAs = snap.viewAs || null;
     server.loaded = true;
@@ -40,6 +44,7 @@
         return res.json().catch(function () { return { ok: false, message: 'Respuesta inválida del servidor.' }; }).then(function (data) {
           server.online = true;
           if (data && data.view) apply(data);
+          else if (!server.loaded) server.problem = (data && data.message) || '';
           if (res.status === 401 && data.code === 'SIN_SESION') { server.me = null; server.viewAs = null; }
           if (!res.ok && data.ok === undefined) data.ok = false;
           return data;
@@ -55,11 +60,32 @@
       pendingRefresh = false;
       render();
       if (keepScroll) window.scrollTo(0, y);
+      if (server.loaded) connectEvents();
     });
   }
-  /** Avisos del servidor: si otra persona cambió algo, se actualiza sin pisar lo que se está escribiendo. */
+  /**
+   * Avisos del servidor: si otra persona cambió algo, se actualiza sin pisar lo que se está escribiendo.
+   * En el servidor propio llegan al instante (eventos); en Vercel la pantalla consulta cada 10 s si hubo cambios.
+   */
   function connectEvents() {
-    if (!window.EventSource) return;
+    if (eventsOn) return;
+    eventsOn = true;
+    if (server.eventos === 'consulta' || !window.EventSource) {
+      var checking = false;
+      var check = function () {
+        if (document.hidden || checking) return;
+        checking = true;
+        fetch('/api/rev', { credentials: 'same-origin', cache: 'no-store' })
+          .then(function (res) { return res.json(); })
+          .then(function (d) { server.online = true; if (d && d.rev > server.rev) scheduleRefresh(); })
+          .catch(function () { /* sin conexión: se reintenta en la próxima consulta */ })
+          .then(function () { checking = false; });
+      };
+      setInterval(check, 10000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+      window.addEventListener('focus', check);
+      return;
+    }
     var es = new EventSource('/api/eventos');
     es.addEventListener('cambio', function (e) {
       var d = {};
@@ -1324,6 +1350,7 @@
         field('Usuario', input('username', 'text', admin ? admin.username : 'admin', 'required autocomplete="username" autocapitalize="none" spellcheck="false"'), 'Letras sin acento, números, punto o guion.', 'wide') +
         field('Contraseña', input('p1', 'password', '', 'required autocomplete="new-password" minlength="8"'), 'Al menos 8 caracteres.', 'wide') +
         field('Repetir contraseña', input('p2', 'password', '', 'required autocomplete="new-password" minlength="8"'), '', 'wide') +
+        (server.setupCode ? field('Código de configuración', input('codigo', 'password', '', 'required autocomplete="off"'), 'Lo definió quien publicó el sistema (variable CODIGO_CONFIGURACION en Vercel).', 'wide') : '') +
         '<div class="form-error" role="alert"></div><button class="btn primary lg wide" type="submit">Crear acceso y entrar</button></form>'
       : '<h1>Ingresar</h1><p class="muted">Usá el usuario y la contraseña que te dio Yvy Guaraní.</p>' +
         '<form class="form auth-form" data-form="login" novalidate>' +
@@ -1518,7 +1545,7 @@
     if (!server.loaded) {
       document.body.className = 'mode-auth';
       $('main').innerHTML = '<div class="offline"><img src="assets/logo-yvy.jpg" alt="" width="64" height="64"><h1>No se pudo conectar con el servidor</h1>' +
-        '<p class="muted">Revisá la conexión a internet o que el servidor esté encendido.</p><button class="btn primary" type="button" data-act="reconectar">Intentar de nuevo</button></div>';
+        '<p class="muted">' + esc(server.problem || 'Revisá la conexión a internet o que el servidor esté encendido.') + '</p><button class="btn primary" type="button" data-act="reconectar">Intentar de nuevo</button></div>';
       return;
     }
     renderChrome();
@@ -1550,7 +1577,7 @@
     setup: function (f) {
       var problem = passwordProblem(f.p1, f.p2);
       if (problem) return { ok: false, message: problem };
-      return api('/api/configurar', { name: f.name, username: f.username, password: f.p1 }).then(function (r) {
+      return api('/api/configurar', { name: f.name, username: f.username, password: f.p1, codigo: f.codigo || '' }).then(function (r) {
         if (r.ok) location.hash = '#/panel';
         return r;
       });
@@ -2165,5 +2192,5 @@
 
   loadUi();
   state = D.emptyState();
-  refresh().then(connectEvents);
+  refresh();
 })();

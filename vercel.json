@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node tools/vercel-publico.mjs",
+  "outputDirectory": "publico",
+  "regions": ["gru1"],
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "js/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:ruta*", "destination": "/api/index?ruta=:ruta*" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "same-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=15552000" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data: https:; media-src 'self' https:; frame-src https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" }
+      ]
+    }
+  ]
+}

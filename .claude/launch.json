@@ -12,6 +12,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server/main.mjs", "--port=4174", "--data=data-prueba"],
       "port": 4174
+    },
+    {
+      "name": "yvy-vercel",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/simular-vercel.mjs", "--port=4175", "--codigo=prueba-local"],
+      "port": 4175
     }
   ]
 }

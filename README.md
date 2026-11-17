@@ -1,7 +1,12 @@
 # Yvy Guaraní S.A. — tienda y sistema de gestión
 
 Sistema web da Yvy Guaraní S.A. para ligar a produção das cooperativas aos almacenes de barrio (bodegas): uma **loja** para os clientes e um **sistema de gestão** (pedidos, depósito, estoque, abastecimento, preços, clientes e usuários) para a equipe.
-Interface em espanhol do Paraguai; funciona no computador e no celular. **Um servidor guarda os dados de todos**: cada pessoa entra do seu aparelho e vê as mudanças dos outros em tempo real.
+Interface em espanhol do Paraguai; funciona no computador e no celular. **Uma base central guarda os dados de todos**: cada pessoa entra do seu aparelho e vê as mudanças dos outros.
+
+Pode ser publicado de dois jeitos, com as mesmas regras e permissões:
+
+- **Vercel + base Neon (Postgres)**: guia em **[VERCEL.md](VERCEL.md)**. As mudanças de outras pessoas aparecem em até 10 segundos.
+- **Servidor próprio (VPS) com SQLite**: guia em **[PUBLICAR.md](PUBLICAR.md)**. As mudanças aparecem na hora.
 
 ## Como rodar
 
@@ -11,7 +16,7 @@ O código está em **https://github.com/MaicoLeal/YVY-GUARANI** (repositório p�
 git clone https://github.com/MaicoLeal/YVY-GUARANI.git
 ```
 
-Requer apenas **Node.js 24 ou superior** (testado com 26). Sem dependências para instalar, sem build e sem serviços pagos: o banco de dados é o SQLite que já vem no Node.
+Requer apenas **Node.js 24 ou superior** (testado com 26). Para rodar no computador não precisa instalar nada nem fazer build: o banco de dados é o SQLite que já vem no Node.
 
 ```bash
 npm start
@@ -23,7 +28,9 @@ Abra http://localhost:4173. Na primeira vez aparece **"Configurá el acceso"**: 
 npm test
 ```
 
-Roda os 65 testes automatizados: regras de estoque e pedido, roteiro de aceitação, painel, acessos, catálogo, visão de dados por papel, o servidor (login, permissões, concorrência, persistência, diário, arquivos protegidos e avisos ao vivo) e o modo produção (https, proxy e arranque).
+Roda os 82 testes automatizados: regras de estoque e pedido, roteiro de aceitação, painel, acessos, catálogo, visão de dados por papel, o servidor com SQLite e com Postgres (login, permissões, concorrência, persistência, diário, arquivos protegidos e avisos), o modo produção (https, proxy e arranque) e a função da Vercel (duas cópias sobre a mesma base, código do primeiro acesso, IP real, `vercel.json`).
+
+As provas de Postgres e Vercel usam um Postgres em memória (PGlite), que vem com `npm install`. Sem ele, essas provas aparecem como puladas e as demais rodam normalmente.
 
 ### Onde ficam os dados
 
@@ -40,7 +47,7 @@ Roda os 65 testes automatizados: regras de estoque e pedido, roteiro de aceitaç
   ```
 
   Os outros aparelhos abrem `http://IP-DO-COMPUTADOR:4173`. O Windows pode pedir para liberar o firewall. **Atenção:** sem https as senhas viajam sem criptografia pela rede; use só numa rede de confiança.
-- **Pela internet** (Ecoagro, fornecedores e clientes de qualquer lugar): siga o **[PUBLICAR.md](PUBLICAR.md)**. O kit em `deploy/` instala o sistema num VPS Ubuntu com Caddy (https automático) e serviço do sistema, e traz scripts de instalação e atualização com volta atrás. Também dá para usar https direto com `--tls-cert=` e `--tls-key=`.
+- **Pela internet** (Ecoagro, fornecedores e clientes de qualquer lugar): na Vercel, siga o **[VERCEL.md](VERCEL.md)**; num servidor próprio, o **[PUBLICAR.md](PUBLICAR.md)**. O kit em `deploy/` instala o sistema num VPS Ubuntu com Caddy (https automático) e serviço do sistema, e traz scripts de instalação e atualização com volta atrás. Também dá para usar https direto com `--tls-cert=` e `--tls-key=`.
 
 Outras opções: `--port=` (ou `PORT`) e `--data=` (ou `DATA_DIR`). Em `.claude/launch.json` há também a configuração **yvy-prueba** (porta 4174, pasta `data-prueba/`): uma instância de testes separada que não toca nos dados reais.
 
@@ -52,7 +59,7 @@ Outras opções: `--port=` (ou `PORT`) e `--data=` (ou `DATA_DIR`). Em `.claude/
 - **Sessão**: cookie `HttpOnly`, `SameSite=Lax` (e `Secure` com https), válida por 14 dias. Na base fica só o hash do token. Os POST exigem JSON e um cabeçalho próprio, o que bloqueia envios forjados de outros sites.
 - **Cabeçalhos**: política de conteúdo restrita (CSP), proteção contra iframes e `nosniff`.
 - **Diário** (`diario` na base): cada ação aceita ou recusada, com usuário, papel, IP e "vista de" quando a Administración usa "Ver como". Fotos incrustadas ficam como `[imagen]`; senhas nunca entram no diário.
-- **Transações**: o novo estado e o registro no diário são gravados juntos ou nenhum é gravado. O servidor processa um comando por vez, então duas reservas simultâneas nunca vendem o mesmo estoque (há teste para isso).
+- **Transações**: o novo estado e o registro no diário são gravados juntos ou nenhum é gravado. Cada mudança só é gravada se ninguém mudou a base enquanto ela era calculada; se mudou, é recalculada com os dados novos. Assim duas reservas simultâneas nunca vendem o mesmo estoque, mesmo na Vercel, onde várias cópias da função atendem ao mesmo tempo (há testes para isso).
 
 ## Níveis de acesso
 
@@ -97,23 +104,30 @@ Em **Configuración → Datos y respaldo → Escenarios** (só Administración; 
 
 | Arquivo | Papel |
 | --- | --- |
-| `server/app.mjs` | Servidor: base SQLite, sessões, API, diário, cópias de segurança, avisos ao vivo e arquivos estáticos. |
+| `server/nucleo.mjs` | API: sessões, permissões, comandos, diário e vistas por conta. É a mesma no servidor próprio e na Vercel. |
+| `server/almacen-sqlite.mjs`, `server/almacen-postgres.mjs` | Onde os dados ficam: SQLite (servidor próprio) ou Postgres (Vercel/Neon). Cada mudança só é gravada se a base não mudou no meio. |
+| `server/app.mjs` | Servidor próprio: API com SQLite, arquivos da página, avisos ao vivo e cópias de segurança. |
 | `server/main.mjs` | Inicia o servidor (porta, host, pasta de dados, https). |
 | `js/domain.js` | Regras, sem dependências. Toda alteração passa por `execute(state, actor, cmd, now)`; `viewFor` define o que cada conta recebe. |
 | `js/catalogo.js` | Catálogo inicial (produtos, categorias, histórias, receitas, selos declarados). |
 | `js/seed.js` | Dados de arranque: catálogo inicial, demonstração e cenário de prueba. |
 | `js/app.js` | Interface: loja, ingresso e sistema de gestão. Conversa só com a API. |
 | `css/app.css` | Estilos. Fonte Poppins embutida (`assets/fonts/`, licença OFL). |
-| `tests/` | 65 testes automatizados (`tests/fixtures/` tem um certificado só para os testes de https). |
+| `api/index.mjs`, `vercel.json`, `tools/vercel-publico.mjs`, `VERCEL.md` | Publicação na Vercel: função da API, configuração, build da página e guia. `tools/simular-vercel.mjs` simula a Vercel no computador. |
+| `tests/` | 82 testes automatizados (`tests/fixtures/` tem um certificado só para os testes de https). |
 | `deploy/`, `PUBLICAR.md` | Kit e guia para publicar na internet com https. |
 
 ### API
 
-`GET /api/estado`, `GET /api/eventos` (avisos ao vivo), `POST /api/ingresar`, `POST /api/salir`, `POST /api/configurar` (só no primeiro acesso), `POST /api/contrasena`, `POST /api/comando` (`{ type, payload }`, os mesmos comandos de `domain.js`), `POST /api/escenario`, `GET/POST /api/respaldo`, `GET /api/salud`.
+`GET /api/estado`, `GET /api/eventos` (avisos ao vivo, só no servidor próprio), `GET /api/rev` (revisão atual, para a consulta periódica na Vercel), `POST /api/ingresar`, `POST /api/salir`, `POST /api/configurar` (só no primeiro acesso), `POST /api/contrasena`, `POST /api/comando` (`{ type, payload }`, os mesmos comandos de `domain.js`), `POST /api/escenario`, `GET/POST /api/respaldo`, `GET /api/salud`.
 
 ## Verificação desta versão
 
-- **65 testes automatizados passando**, incluindo os 12 do servidor e os 3 do modo produção (https com cookie Secure e HSTS, IP real atrás do proxy, aviso de porta ocupada).
+- **82 testes automatizados passando**: as 12 provas do servidor rodam duas vezes (SQLite e Postgres), mais os 3 do modo produção e os 5 da Vercel. Um deles força o caso difícil: uma cópia da função grava no meio do cálculo da outra, e a segunda recalcula e recusa a reserva.
+- **No simulador da Vercel** (`tools/simular-vercel.mjs`):
+  - primeiro acesso recusado com código errado e aceito com o certo;
+  - troca feita por um segundo aparelho (script) aparecendo na tela em até 10 segundos, sem recarregar;
+  - sem base conectada, a tela explica o que fazer.
 - **Na interface, numa instância de testes separada** (porta 4174, já apagada junto com as senhas de teste):
   - ingresso pelo servidor, com o cookie de sessão inacessível para scripts da página;
   - painel com a demonstração;
@@ -124,11 +138,11 @@ Em **Configuración → Datos y respaldo → Escenarios** (só Administración; 
   - visitante sem preços nem estoque;
   - telas a 390 px sem rolagem horizontal.
 - O servidor real (`data/`) ficou na tela de primeiro acesso, sem senha criada.
-- **Não verificado**: acesso por outro aparelho físico na rede, hospedagem com https, celular físico, leitor de tela, reprodução de vídeo real.
+- **Não verificado**: a publicação real na Vercel com a Neon (feita pelo painel da Vercel), acesso por outro aparelho físico, celular físico, leitor de tela, reprodução de vídeo real.
 
 ## O que ainda falta para operar com lojas reais
 
-1. **Contratar o VPS e o domínio e seguir o [PUBLICAR.md](PUBLICAR.md).** Os scripts de instalação foram validados só na sintaxe: ainda não rodaram num servidor real.
+1. **Conectar a base Neon na Vercel e seguir o [VERCEL.md](VERCEL.md)** (ou, num servidor próprio, o [PUBLICAR.md](PUBLICAR.md), cujos scripts só foram validados na sintaxe).
 2. **Preços e condições** do piloto (pedido mínimo, entrega, pagamento e prazos).
 3. **Procedimento de qualidade e liberação** por categoria, com a cooperativa.
 4. **Autorização da Ecoagro** para as fotos e validação dos selos declarados.

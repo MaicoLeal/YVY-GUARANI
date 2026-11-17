@@ -2,12 +2,19 @@
   "name": "yvy-guarani-piloto",
   "version": "0.1.0",
   "private": true,
-  "description": "Tienda y sistema de gestión de Yvy Guaraní S.A. (servidor Node con SQLite embutido, sin dependencias).",
+  "description": "Tienda y sistema de gestión de Yvy Guaraní S.A. Servidor propio con SQLite (sin dependencias) o Vercel con Postgres (Neon).",
   "scripts": {
     "start": "node server/main.mjs",
-    "test": "node --test tests/"
+    "test": "node --test tests/",
+    "vercel-local": "node tools/simular-vercel.mjs --codigo=prueba-local"
   },
   "engines": {
     "node": ">=24"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.2.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.12"
   }
 }

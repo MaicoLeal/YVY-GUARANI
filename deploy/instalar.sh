@@ -43,7 +43,7 @@ install -d -m 0755 "$APP_DIR" "$ETC_DIR"
 
 paso "Copiando la aplicación a $APP_DIR (sin datos locales)…"
 find "$APP_DIR" -mindepth 1 -delete
-tar -C "$SRC_DIR" --exclude=./data --exclude=./data-prueba --exclude=./.git --exclude=./.claude --exclude=./tests -cf - . | tar -C "$APP_DIR" -xf -
+tar -C "$SRC_DIR" --exclude=./data --exclude=./data-prueba --exclude=./.git --exclude=./.claude --exclude=./tests --exclude=./node_modules --exclude=./publico -cf - . | tar -C "$APP_DIR" -xf -
 chown -R root:root "$APP_DIR"
 chmod -R u=rwX,go=rX "$APP_DIR"
 

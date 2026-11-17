@@ -2,6 +2,8 @@
 
 Guia para colocar a loja e o sistema de gestão da Yvy Guaraní no ar, acessíveis pelas cooperativas, pela equipe e pelos almacenes de qualquer lugar, com cadeado (https).
 
+Este guia é para um **servidor próprio (VPS)**. Para publicar na **Vercel**, use o [VERCEL.md](VERCEL.md).
+
 O código fica no GitHub: **https://github.com/MaicoLeal/YVY-GUARANI**. O servidor baixa o projeto de lá e, a cada versão nova, só puxa as mudanças.
 
 O que já está pronto no projeto:
