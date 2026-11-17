@@ -13,7 +13,7 @@ A configuração está em `vercel.json` e é aplicada sozinha a cada publicaçã
 No painel da Vercel, dentro do projeto:
 
 1. Abra **Storage → Create Database → Neon** e escolha o plano gratuito (Free).
-2. **Região:** escolha **São Paulo** (AWS sa-east-1) se aparecer. A função da Vercel já está configurada para rodar em São Paulo (`"regions": ["gru1"]` no `vercel.json`); base e função na mesma região deixam o sistema rápido. Se a base ficar em outra região, troque a região da função para a mais próxima dela (veja "Se algo não funcionar").
+2. **Região:** a função e a base precisam ficar na mesma região, senão cada consulta atravessa o continente. A base atual do projeto (`neon-aero-fence`, criada em 17/11/2026) está em **Washington, D.C. (iad1)**, e por isso a função também roda lá (`"regions": ["iad1"]` no `vercel.json`). Se um dia a base for recriada em outra região, troque `regions` para a mesma (veja "Se algo não funcionar").
 3. **Connect:** conecte a base a este projeto. A Vercel cria sozinha a variável `DATABASE_URL`; você não precisa copiar senha nenhuma.
    - Marque pelo menos **Production**.
    - Se a Neon oferecer criar uma base separada para **Preview**, aceite. Assim os testes de branches não mexem nos dados reais.
