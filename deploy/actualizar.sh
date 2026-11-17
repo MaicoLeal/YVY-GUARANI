@@ -2,8 +2,8 @@
 # Actualiza el código de Yvy Guaraní en el servidor sin tocar los datos.
 # Guarda la versión anterior del código y una copia de la base antes de cambiar nada.
 #
-# Uso, desde la carpeta de la versión nueva copiada al servidor:
-#   sudo bash deploy/actualizar.sh
+# Uso, desde la copia del repositorio en el servidor (ver PUBLICAR.md):
+#   cd ~/yvy && git pull && sudo bash deploy/actualizar.sh
 # Para volver a la versión anterior si algo sale mal:
 #   sudo bash deploy/actualizar.sh --volver
 set -euo pipefail

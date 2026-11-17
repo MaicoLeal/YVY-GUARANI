@@ -2,6 +2,8 @@
 
 Guia para colocar a loja e o sistema de gestão da Yvy Guaraní no ar, acessíveis pelas cooperativas, pela equipe e pelos almacenes de qualquer lugar, com cadeado (https).
 
+O código fica no GitHub: **https://github.com/MaicoLeal/YVY-GUARANI**. O servidor baixa o projeto de lá e, a cada versão nova, só puxa as mudanças.
+
 O que já está pronto no projeto:
 
 | Arquivo | Para quê |
@@ -48,27 +50,27 @@ Conecte por SSH e instale o necessário. Confira os comandos nas páginas oficia
    caddy version
    ```
 
-## 4. Enviar o projeto
+4. **Git** (no Ubuntu costuma vir instalado):
 
-No seu computador (PowerShell, na pasta do projeto), gere um zip **sem** a pasta `data` (os dados locais de teste não vão para o servidor):
+   ```bash
+   sudo apt install -y git
+   ```
 
-```powershell
-Compress-Archive -Path index.html,package.json,README.md,PUBLICAR.md,css,js,assets,server,tests,deploy -DestinationPath yvy.zip -Force
+## 4. Baixar o projeto no servidor
+
+No servidor, na pasta do seu usuário:
+
+```bash
+cd ~ && git clone https://github.com/MaicoLeal/YVY-GUARANI.git yvy && cd yvy
 ```
 
-Envie o zip para o servidor (troque usuário e IP):
+Essa pasta `~/yvy` é só a cópia de onde o sistema é instalado. O sistema em uso fica em `/opt/yvy` e os dados em `/var/lib/yvy`; nenhum dado vai nem volta do GitHub.
 
-```powershell
-scp yvy.zip usuario@IP-DO-SERVIDOR:~
-```
+> **Repositório privado:** hoje o repositório é público, por isso o `git clone` funciona sem senha. Se ele passar a ser privado, o servidor precisa de uma chave de acesso só de leitura (no GitHub: Settings → Deploy keys) para clonar e atualizar.
 
 ## 5. Instalar
 
-No servidor:
-
-```bash
-sudo apt install -y unzip && unzip -o yvy.zip -d yvy && cd yvy
-```
+Ainda dentro de `~/yvy`:
 
 ```bash
 sudo bash deploy/instalar.sh tienda.seudominio.com.py
@@ -90,17 +92,29 @@ Depois, na ordem:
 
 ## Atualizar para uma versão nova
 
-Gere o zip de novo (passo 4), envie e, no servidor:
+1. **No seu computador**, na pasta do projeto: rode os testes, faça o commit e envie para o GitHub.
+
+   ```bash
+   npm test
+   ```
+
+   ```bash
+   git add -A && git commit -m "Descreva a mudança" && git push
+   ```
+
+2. **No servidor**: puxe a versão nova e atualize. O script roda os testes de novo e, se algum falhar, não troca nada.
+
+   ```bash
+   cd ~/yvy && git pull && sudo bash deploy/actualizar.sh
+   ```
+
+Se algo der errado depois de atualizar, volte o sistema para a versão anterior (os dados não são tocados):
 
 ```bash
-unzip -o yvy.zip -d yvy-nova && cd yvy-nova && sudo bash deploy/actualizar.sh
+cd ~/yvy && sudo bash deploy/actualizar.sh --volver
 ```
 
-Se algo der errado:
-
-```bash
-sudo bash deploy/actualizar.sh --volver
-```
+A pasta `~/yvy` continua com a versão nova. Corrija o problema, envie uma versão corrigida para o GitHub e só então rode o `git pull` e o `actualizar.sh` de novo.
 
 ## Cópias de segurança
 

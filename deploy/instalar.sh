@@ -3,7 +3,8 @@
 # Requisitos previos (ver PUBLICAR.md, paso 3): Node.js 24 o superior y Caddy instalados,
 # y el dominio apuntando a la IP de este servidor.
 #
-# Uso, desde la carpeta del proyecto copiada al servidor:
+# Uso, desde la copia del repositorio en el servidor (ver PUBLICAR.md):
+#   git clone https://github.com/MaicoLeal/YVY-GUARANI.git ~/yvy && cd ~/yvy
 #   sudo bash deploy/instalar.sh tienda.tu-dominio.com.py
 set -euo pipefail
 

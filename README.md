@@ -5,6 +5,12 @@ Interface em espanhol do Paraguai; funciona no computador e no celular. **Um ser
 
 ## Como rodar
 
+O código está em **https://github.com/MaicoLeal/YVY-GUARANI** (repositório público). Para trabalhar em outro computador:
+
+```bash
+git clone https://github.com/MaicoLeal/YVY-GUARANI.git
+```
+
 Requer apenas **Node.js 24 ou superior** (testado com 26). Sem dependências para instalar, sem build e sem serviços pagos: o banco de dados é o SQLite que já vem no Node.
 
 ```bash
@@ -67,7 +73,7 @@ A matriz completa está em **Usuarios y accesos**.
 
 51 produtos tirados da loja on-line da Ecoagro (ecoagro.org.py), em 8 categorias: pastas, especiarias, méis, grãos, farinhas, yuyos, almacén e doces.
 
-- **Fotos**: baixadas dessa loja e reduzidas (`assets/productos/`, ~2 MB). **Confirmar com a Ecoagro a autorização de uso antes de publicar a loja.**
+- **Fotos**: baixadas dessa loja e reduzidas (`assets/productos/`, ~2 MB). **Confirmar com a Ecoagro a autorização de uso.** Elas já estão no repositório público do GitHub. Se a autorização não vier, é preciso apagá-las também do histórico do repositório, não só da versão atual.
 - **Nomes e apresentações**: da loja da Ecoagro. Marcas comercializadas por ela aparecem como "Marca: …"; a linha própria aparece como "Línea Eco Agro Naturalmente".
 - **Selos** (orgânico, sem glúten etc.): mostrados como "según declara el proveedor", até serem validados com documentos.
 - **Descrições, histórias (17) e receitas (12)**: textos próprios da Yvy Guaraní, sem alegações de saúde. Editáveis em Catálogo → Editar.
