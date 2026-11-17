@@ -1,0 +1,6 @@
+# Finales de línea LF en todo el texto, también al clonar en Windows:
+# los scripts de deploy/ tienen que llegar al servidor Linux sin CRLF.
+* text=auto eol=lf
+*.jpg binary
+*.png binary
+*.woff2 binary

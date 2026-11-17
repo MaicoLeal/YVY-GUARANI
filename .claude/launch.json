@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "yvy",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/main.mjs"],
+      "port": 4173
+    },
+    {
+      "name": "yvy-prueba",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/main.mjs", "--port=4174", "--data=data-prueba"],
+      "port": 4174
+    }
+  ]
+}

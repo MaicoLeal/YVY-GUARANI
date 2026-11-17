@@ -1,0 +1,13 @@
+# yvy-guarani — sitio publicado por Caddy con https automático (Let's Encrypt).
+# deploy/instalar.sh reemplaza DOMINIO por el dominio real.
+DOMINIO {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:4173
+	header -Server
+	log {
+		output file /var/log/caddy/yvy.log {
+			roll_size 10MiB
+			roll_keep 10
+		}
+	}
+}

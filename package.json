@@ -1,0 +1,13 @@
+{
+  "name": "yvy-guarani-piloto",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tienda y sistema de gestión de Yvy Guaraní S.A. (servidor Node con SQLite embutido, sin dependencias).",
+  "scripts": {
+    "start": "node server/main.mjs",
+    "test": "node --test tests/"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

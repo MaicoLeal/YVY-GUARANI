@@ -1,0 +1,40 @@
+# Servicio systemd de Yvy Guaraní. Lo instala deploy/instalar.sh (reemplaza @NODE@ por la ruta de node).
+[Unit]
+Description=Yvy Guaraní — tienda y sistema de gestión
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=yvy
+Group=yvy
+WorkingDirectory=/opt/yvy
+EnvironmentFile=/etc/yvy/yvy.env
+ExecStart=@NODE@ /opt/yvy/server/main.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+
+# Aislamiento: el servicio solo puede escribir en su carpeta de datos.
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/yvy
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

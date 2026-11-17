@@ -1,0 +1,12 @@
+# Datos reales y de prueba: nunca van al repositorio
+data/
+data-prueba/
+*.db
+*.db-shm
+*.db-wal
+# Paquetes generados para enviar al servidor
+*.zip
+node_modules/
+# Configuración local de Claude Code (launch.json sí se versiona)
+.claude/*
+!.claude/launch.json

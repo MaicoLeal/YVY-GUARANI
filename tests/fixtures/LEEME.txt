@@ -1,0 +1,2 @@
+Certificado de prueba (localhost, firmado por una autoridad de prueba descartada) SOLO para los tests de https en 127.0.0.1.
+No sirve ni debe usarse en producción: allí el certificado lo emite Caddy con Let’s Encrypt.
