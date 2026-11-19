@@ -13,10 +13,10 @@ import fs from 'node:fs';
 
 const major = Number(process.versions.node.split('.')[0]);
 try {
-  if (major < 24) throw new Error('version');
+  if (major < 22) throw new Error('version');
   await import('node:sqlite');
 } catch (e) {
-  console.error('Se necesita Node.js 24 o superior (con node:sqlite). Versión actual: ' + process.versions.node);
+  console.error('Se necesita Node.js 22.13+ o 24+ (con node:sqlite). Versión actual: ' + process.versions.node);
   process.exit(1);
 }
 const { createApp } = await import('./app.mjs');

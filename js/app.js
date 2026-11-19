@@ -10,7 +10,7 @@
   var UI_KEY = 'yvy-piloto-ui-v1';
 
   var state;
-  var ui = { viewAs: null, draft: null, carts: {}, orderFilter: 'activos', movSku: '', period: '30', pFrom: '', pTo: '' };
+  var ui = { viewAs: null, draft: null, carts: {}, orderFilter: 'activos', movSku: '', period: '30', pFrom: '', pTo: '', waThread: '', waMsgs: {}, helpMod: 'recepcion', helpQ: '', stockQ: '', stockCat: '', catQ: '', catFilter: '', orderQ: '' };
   var dialogSubmit = null;
   var toastTimer = null;
 
@@ -277,23 +277,35 @@
     logout: '<path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/>',
     eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
     shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6"/>',
-    chef: '<path d="M7 14.5V20h10v-5.5"/><path d="M7 14.5a4 4 0 1 1 1.2-7.8A4.5 4.5 0 0 1 16 6.7a4 4 0 1 1 1 7.8z"/><path d="M7 17h10"/>'
+    chef: '<path d="M7 14.5V20h10v-5.5"/><path d="M7 14.5a4 4 0 1 1 1.2-7.8A4.5 4.5 0 0 1 16 6.7a4 4 0 1 1 1 7.8z"/><path d="M7 17h10"/>',
+    sprout: '<path d="M12 21V11"/><path d="M12 11c0-4.5 3.5-7 8-7 0 4.5-2.5 7-8 7z"/><path d="M12 14c0-3.5-2.8-6-7-6 0 3.5 2.2 6 7 6z"/>',
+    qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM18 18h3v3h-3z"/>',
+    whatsapp: '<path d="M20 11.5a8.4 8.4 0 0 1-12.5 7.3L3 20l1.3-4.3A8.4 8.4 0 1 1 20 11.5z"/><path d="M9.5 9.2c.2-.4.5-.4.8-.3l.8.4c.2.1.3.4.2.6l-.4.8c.5.9 1.3 1.7 2.2 2.2l.8-.4c.2-.1.5 0 .6.2l.4.8c.1.3.1.6-.3.8-.6.4-1.5.5-2.3.2-1.8-.6-3.3-2.1-3.9-3.9-.3-.8-.2-1.7.2-2.4z"/>',
+    trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a3 3 0 1 1 4.6 2.5c-.8.5-1.3 1-1.3 2"/><circle cx="12" cy="17.2" r=".7"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    map: '<path d="M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/>',
+    credit: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M7 15h4"/>',
+    download: '<path d="M12 4v11m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/>'
   };
-  function icon(name) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>'; }
+  function icon(name) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || ICONS.leaf) + '</svg>'; }
 
-  // [ruta, etiqueta, ícono, grupo]. Cada rol ve solo sus secciones; Administración ve todas.
+  // [ruta, etiqueta, ícono, grupo, tagOpcional]. Cada rol ve solo sus secciones; Administración ve todas.
   var NAV = {
-    visitante: [['inicio', 'Inicio', 'home'], ['tienda', 'Tienda', 'store'], ['ingresar', 'Ingresar', 'user']],
-    almacen: [['inicio', 'Inicio', 'home'], ['tienda', 'Tienda', 'store'], ['mi-pedido', 'Mi pedido', 'cart'], ['mis-pedidos', 'Mis pedidos', 'list'], ['mi-interes', 'Avisar interés', 'bell']],
-    cooperativa: [['mi-oferta', 'Mi oferta', 'leaf', 'Mi cooperativa'], ['lo-recibido', 'Lo recibido', 'inbox', 'Mi cooperativa'], ['mis-productos', 'Mis productos', 'box', 'Mi cooperativa']],
+    visitante: [['inicio', 'Inicio', 'home'], ['tienda', 'Tienda', 'store'], ['ayuda', 'Ayuda', 'help'], ['ingresar', 'Ingresar', 'user']],
+    almacen: [['inicio', 'Inicio', 'home'], ['tienda', 'Tienda', 'store'], ['mi-pedido', 'Mi pedido', 'cart'], ['mis-pedidos', 'Mis pedidos', 'list'], ['mi-interes', 'Avisar interés', 'bell'], ['ayuda', 'Ayuda', 'help']],
+    cooperativa: [['mi-oferta', 'Mi oferta', 'leaf', 'Mi cooperativa'], ['lo-recibido', 'Lo recibido', 'inbox', 'Mi cooperativa'], ['mis-productos', 'Mis productos', 'box', 'Mi cooperativa'], ['ayuda', 'Guía y ayuda', 'help', 'Mi cooperativa']],
     operacion: [['panel', 'Panel de depósito', 'chart', 'Depósito'], ['pedidos', 'Pedidos', 'list', 'Depósito'], ['recepcion', 'Recepción', 'inbox', 'Depósito'],
-      ['stock', 'Stock', 'box', 'Depósito'], ['movimientos', 'Movimientos', 'clock', 'Depósito']],
+      ['stock', 'Stock y FEFO', 'box', 'Depósito'], ['movimientos', 'Movimientos', 'clock', 'Depósito'], ['ayuda', 'Guía y capacitación', 'help', 'Sistema']],
     comercial: [['panel', 'Panel comercial', 'chart', 'Ventas'], ['pedidos', 'Pedidos', 'list', 'Ventas'], ['nuevo-pedido', 'Nuevo pedido', 'cart', 'Ventas'], ['clientes', 'Clientes', 'users', 'Ventas'],
-      ['cruce', 'Oferta y demanda', 'swap', 'Abastecimiento'], ['precios', 'Precios', 'tag', 'Abastecimiento'], ['stock', 'Stock', 'box', 'Abastecimiento'], ['tienda', 'Tienda', 'store', 'Tienda']],
+      ['whatsapp', 'Central WhatsApp', 'whatsapp', 'Ventas'],
+      ['cruce', 'Oferta y demanda', 'swap', 'Abastecimiento'], ['precios', 'Precios y comercio justo', 'tag', 'Abastecimiento'], ['tendencias', 'Tendencias y marketing', 'trend', 'Abastecimiento'], ['stock', 'Stock', 'box', 'Abastecimiento'],
+      ['tienda', 'Tienda', 'store', 'Tienda'], ['ayuda', 'Guía y capacitación', 'help', 'Sistema']],
     admin: [['panel', 'Panel general', 'chart', 'Gestión'], ['pedidos', 'Pedidos', 'list', 'Gestión'], ['nuevo-pedido', 'Nuevo pedido', 'cart', 'Gestión'], ['clientes', 'Clientes', 'users', 'Gestión'],
-      ['stock', 'Stock', 'box', 'Depósito'], ['recepcion', 'Recepción', 'inbox', 'Depósito'], ['movimientos', 'Movimientos', 'clock', 'Depósito'],
-      ['cruce', 'Oferta y demanda', 'swap', 'Abastecimiento'], ['precios', 'Precios', 'tag', 'Abastecimiento'], ['catalogo', 'Catálogo', 'leaf', 'Abastecimiento'],
-      ['tienda', 'Tienda', 'store', 'Tienda'], ['usuarios', 'Usuarios y accesos', 'shield', 'Sistema'], ['config', 'Configuración', 'gear', 'Sistema'], ['auditoria', 'Historial', 'clock', 'Sistema']]
+      ['whatsapp', 'Central WhatsApp', 'whatsapp', 'Gestión'],
+      ['stock', 'Stock y FEFO', 'box', 'Depósito'], ['recepcion', 'Recepción', 'inbox', 'Depósito'], ['movimientos', 'Movimientos y kárdex', 'clock', 'Depósito'],
+      ['cruce', 'Oferta y demanda', 'swap', 'Abastecimiento'], ['precios', 'Precios y comercio justo', 'tag', 'Abastecimiento'], ['tendencias', 'Tendencias y marketing', 'trend', 'Abastecimiento'], ['catalogo', 'Catálogo', 'leaf', 'Abastecimiento'],
+      ['tienda', 'Tienda online', 'store', 'Tienda'], ['usuarios', 'Usuarios y accesos', 'shield', 'Sistema'], ['config', 'Configuración', 'gear', 'Sistema'], ['auditoria', 'Historial', 'clock', 'Sistema'], ['ayuda', 'Guía y capacitación', 'help', 'Sistema']]
   };
   var LANDING = { visitante: 'inicio', almacen: 'inicio', cooperativa: 'mi-oferta', operacion: 'panel', comercial: 'panel', admin: 'panel' };
   var STORE_ROLES = { visitante: true, almacen: true };
@@ -306,8 +318,10 @@
   /** Páginas a las que puede entrar el rol, estén o no en su menú. */
   function allowedPages(role) {
     var pages = (NAV[role] || []).map(function (n) { return n[0]; });
+    pages.push('ayuda');
     if (role !== 'visitante') pages.push('cuenta');
     if (role !== 'cooperativa') pages.push('inicio', 'tienda', 'producto');
+    if (role === 'almacen' || role === 'admin' || role === 'comercial') pages.push('pago', 'pedido-confirmado');
     if (role === 'visitante') pages.push('ingresar');
     return pages;
   }
@@ -323,31 +337,66 @@
     else location.hash = '#/' + page;
   }
 
+  function brandMarkHtml() {
+    return '<span class="brand-mark" aria-hidden="true">' + icon('sprout') + '</span>';
+  }
+
   function renderChrome() {
     var a = actor();
     var me = sessionUser();
     var page = currentPage();
     var mode = page === 'ingresar' ? 'auth' : STORE_ROLES[a.role] ? 'store' : 'app';
     document.body.className = 'mode-' + mode;
-    var navPage = page === 'producto' ? 'tienda' : page;
+    var navPage = page === 'producto' ? 'tienda' : (page === 'pago' || page === 'pedido-confirmado') ? 'mi-pedido' : page;
     var nav = NAV[a.role] || [];
     var link = function (n) {
-      return '<a href="#/' + n[0] + '"' + (n[0] === navPage ? ' aria-current="page"' : '') + '>' + icon(n[2]) + '<span>' + esc(n[1]) + '</span></a>';
+      return '<a href="#/' + n[0] + '"' + (n[0] === navPage ? ' aria-current="page"' : '') + '>' + icon(n[2]) + '<span>' + esc(n[1]) + '</span>' + (n[4] ? '<span class="nav-tag">' + esc(n[4]) + '</span>' : '') + '</a>';
     };
 
-    $('brand').innerHTML = '<img src="assets/logo-yvy.jpg" alt="" width="40" height="40"><span><b>' + esc(storeName()) + '</b><small>Yvy Guaraní S.A.</small></span>';
+    var strip = $('store-strip');
+    if (strip) {
+      strip.hidden = mode !== 'store';
+      if (mode === 'store') {
+        strip.innerHTML = '<div class="strip-group">' +
+          '<span class="strip-item">' + icon('sprout') + 'Producción de cooperativas paraguayas · Comercio Justo</span>' +
+          '<span class="strip-item">' + icon('truck') + 'Stock verificado en depósito central</span>' +
+          '</div><div class="strip-group">' +
+          '<span class="strip-item">' + icon('map') + 'Asunción y Gran Asunción</span>' +
+          '<span class="strip-item">PYG (₲) / Español</span></div>';
+      }
+    }
+
+    var roleSub = mode === 'store' ? 'Alimentos Orgánicos & del Campo' : 'ERP Agroecológico · Yvy Guaraní S.A.';
+    $('brand').innerHTML = brandMarkHtml() + '<span><b>' + esc(storeName()) + '</b><small>' + esc(roleSub) + '</small></span>';
     $('brand').setAttribute('href', '#/' + LANDING[a.role]);
     $('brand').setAttribute('aria-label', storeName() + ', ir al inicio');
 
-    $('topnav').innerHTML = mode === 'store' ? nav.filter(function (n) { return n[0] !== 'ingresar'; }).map(link).join('') : '';
+    var topMid = $('top-mid');
+    if (topMid) {
+      if (mode === 'app') {
+        var pendPay = state.orders.filter(function (o) { return o.status !== 'cancelado' && o.payment && o.payment.status === 'en_verificacion'; }).length;
+        topMid.innerHTML = '<form class="global-search" data-form="quick-jump" role="search">' + icon('search') +
+          '<input type="search" name="q" placeholder="Ir a pedido, producto o sección…" aria-label="Buscar en el sistema" autocomplete="off"></form>' +
+          '<span class="status-pill' + (pendPay ? ' amber' : '') + '"><span class="pulse"></span>' +
+          (pendPay ? plural(pendPay, 'pago por verificar', 'pagos por verificar') : 'Operación activa · ' + fdate(today())) + '</span>';
+      } else {
+        topMid.innerHTML = '';
+      }
+    }
+
+    $('topnav').innerHTML = mode === 'store' ? nav.filter(function (n) { return n[0] !== 'ingresar' && n[0] !== 'mi-pedido'; }).map(link).join('') : '';
 
     var env = state.demo ? '<span class="env" title="Pedidos, precios y clientes de este escenario son ficticios">Demostración</span>'
       : state.fixture ? '<span class="env" title="Escenario de prueba ficticio">Escenario de prueba</span>' : '';
     var cartBtn = '';
     if (a.role === 'almacen') {
+      var shopSum = cartSummary(D.storefront(state, today()));
       var n = cartCount();
-      cartBtn = '<a class="iconbtn" href="#/mi-pedido" aria-label="Mi pedido' + (n ? ', ' + n + ' productos' : '') + '">' + icon('cart') + (n ? '<span class="dot">' + n + '</span>' : '') + '</a>';
+      cartBtn = '<a class="iconbtn" href="#/mi-pedido" aria-label="Mi pedido' + (n ? ', ' + n + ' productos' : '') + '">' + icon('cart') +
+        (shopSum.total > 0 ? '<span class="num">' + gs(shopSum.total) + '</span>' : '') +
+        (n ? '<span class="dot">' + n + '</span>' : '') + '</a>';
     }
+    var helpBtn = mode === 'app' ? '<a class="iconbtn" href="#/ayuda" title="Central de Ayuda y Capacitación" aria-label="Central de Ayuda">' + icon('help') + '</a>' : '';
     var account = '';
     if (me) {
       account = '<details class="acct"><summary aria-label="Cuenta de ' + esc(me.name) + '"><span class="avatar">' + esc(initials(me.name)) + '</span>' +
@@ -356,11 +405,12 @@
         (a.viewedBy ? '<button type="button" data-act="salir-vista">' + icon('eye') + 'Volver a mi vista</button>' : '') +
         (me.role !== 'almacen' && me.role !== 'cooperativa' ? '<a href="#/panel">' + icon('chart') + 'Panel</a>' : '') +
         '<a href="#/cuenta">' + icon('user') + 'Mi cuenta</a>' +
+        '<a href="#/ayuda">' + icon('help') + 'Ayuda y capacitación</a>' +
         '<button type="button" data-act="logout">' + icon('logout') + 'Cerrar sesión</button></div></details>';
     } else if (mode !== 'auth') {
       account = '<a class="btn sm primary" href="#/ingresar">' + icon('user') + 'Ingresar</a>';
     }
-    $('top-actions').innerHTML = env + cartBtn + account;
+    $('top-actions').innerHTML = env + helpBtn + cartBtn + account;
 
     var v = viewing();
     $('viewas').hidden = !v;
@@ -368,16 +418,24 @@
       (v.orgId ? ' · ' + esc(orgName(v.orgId)) : '') + '. Lo que hagas queda registrado a su nombre, como vista tuya.</span></p>' +
       '<button class="btn sm light" type="button" data-act="salir-vista">Volver a mi vista</button>' : '';
 
-    // Menú lateral agrupado (sistema de gestión) y barra inferior en el celular.
+    // Menú lateral agrupado (estilo Stitch Organic Commerce) y barra inferior en móvil.
     var group = null;
-    $('side').innerHTML = mode === 'app' ? nav.map(function (n) {
-      var h = n[3] && n[3] !== group ? '<p class="side-group">' + esc(n[3]) + '</p>' : '';
-      group = n[3] || group;
-      return h + link(n);
-    }).join('') : '';
+    if (mode === 'app') {
+      var sideStatus = '<div class="side-status"><span class="dot-live"></span><div><b>Red Agroecológica Activa</b><small>Asunción &amp; Cooperativas PY</small></div></div>';
+      var sideLinks = nav.map(function (n) {
+        var h = n[3] && n[3] !== group ? '<p class="side-group">' + esc(n[3]) + '</p>' : '';
+        group = n[3] || group;
+        return h + link(n);
+      }).join('');
+      var sideFoot = '<div class="side-foot"><div class="side-currency"><small>Moneda del Sistema</small><b><span>₲ Guaraní (PYG)</span>' + icon('credit') + '</b>' +
+        '<div class="ver"><span>Yvy ERP</span><em>SIPAP / FEFO</em></div></div></div>';
+      $('side').innerHTML = sideStatus + sideLinks + sideFoot;
+    } else {
+      $('side').innerHTML = '';
+    }
     $('side').classList.remove('open');
     var bottom = mode === 'store'
-      ? nav.filter(function (n) { return n[0] !== 'mi-interes'; }).concat(me ? [['cuenta', 'Cuenta', 'user']] : [])
+      ? nav.filter(function (n) { return n[0] !== 'mi-interes' && n[0] !== 'ayuda'; }).slice(0, 4).concat(me ? [['cuenta', 'Cuenta', 'user']] : [])
       : nav.length <= 5 ? nav : nav.slice(0, 4);
     $('bottom').innerHTML = mode === 'auth' ? '' : bottom.map(link).join('') +
       (mode === 'app' && nav.length > 5 ? '<button type="button" data-act="menu" aria-expanded="false">' + icon('more') + '<span>Más</span></button>' : '');
@@ -425,10 +483,15 @@
         '<small>' + esc(qty(ln.qty, ln.unit)) + ' × ' + (ln.unitPrice === null ? 'Sin precio' : gs(ln.unitPrice)) + '</small>' + extra + '</div>' +
         '<div>' + (ln.lineTotal === null ? 'Sin datos' : gs(ln.lineTotal)) + '</div></li>';
     }).join('');
+    var pay = o.payment || null;
+    var payTone = pay ? (pay.status === 'acreditado' ? 'ok' : pay.status === 'en_verificacion' ? 'warn' : '') : '';
+    var payLabel = pay ? (D.PAYMENT_METHODS[pay.method] || pay.method) + ' · ' + (D.PAYMENT_STATUS[pay.status] || pay.status) : '';
     var meta = '<dl class="kv">' +
       (internal ? '<dt>Almacén</dt><dd>' + esc(orgName(o.almacenId)) + '</dd>' : '') +
       '<dt>Creado</dt><dd>' + fdatetime(o.createdAt) + '</dd>' +
-      '<dt>Entrega deseada</dt><dd>' + win(o.windowFrom, o.windowTo) + '</dd>' +
+      '<dt>Entrega deseada</dt><dd>' + win(o.windowFrom, o.windowTo) + (o.checkout && o.checkout.slot ? ' · ' + esc(o.checkout.slot) : '') + '</dd>' +
+      (o.checkout && (o.checkout.address || o.checkout.zone) ? '<dt>Dirección</dt><dd>' + esc([o.checkout.address, o.checkout.zone].filter(Boolean).join(' · ')) + '</dd>' : '') +
+      (pay ? '<dt>Pago</dt><dd>' + badge(payLabel, payTone) + (pay.ref ? ' <code class="small">Ref: ' + esc(pay.ref) + '</code>' : '') + '</dd>' : '') +
       (o.notes ? '<dt>Observaciones</dt><dd>' + esc(o.notes) + '</dd>' : '') +
       (o.delivery ? '<dt>Entrega a cargo de</dt><dd>' + esc(o.delivery.responsible) + '</dd><dt>Ventana de entrega</dt><dd>' + win(o.delivery.windowFrom, o.delivery.windowTo) + '</dd>' +
         '<dt>Despachado</dt><dd>' + fdatetime(o.delivery.dispatchedAt) + '</dd>' +
@@ -444,6 +507,14 @@
       if (!internal) actions.push(btn('borrador-a-carrito', 'Editar en Mi pedido'));
       if (shortage && can('pedido.ajustarADisponible')) actions.push(btn('ajustar-disponible', 'Ajustar a lo disponible'));
     }
+    if (o.status !== 'borrador' && o.status !== 'cancelado') {
+      if ((!pay || pay.status !== 'acreditado') && (!internal || can('pedido.informarPago'))) {
+        actions.push('<a class="btn soft" href="#/pago/' + encodeURIComponent(o.id) + '">' + icon('qr') + (pay && pay.status === 'en_verificacion' ? 'Ver QR / comprobante' : 'Ver QR SIPAP / pagar') + '</a>');
+      }
+      if (internal && can('pedido.confirmarPago') && (!pay || pay.status !== 'acreditado')) {
+        actions.push(btn('confirmar-pago', 'Confirmar pago…', pay && pay.status === 'en_verificacion' ? 'primary' : 'soft'));
+      }
+    }
     if (o.status === 'reservado' && can('pedido.preparar')) actions.push(btn('preparar', 'Iniciar preparación', 'primary'));
     if (o.status === 'en_preparacion' && can('pedido.despachar')) actions.push(btn('despachar', 'Despachar…', 'primary'));
     if (o.status === 'despachado' && can('pedido.entregar')) actions.push(btn('entregar', 'Marcar entregado…', 'primary'));
@@ -453,7 +524,9 @@
       return '<li>' + fdatetime(h.at) + ' — ' + esc(D.ORDER_STATUS[h.from]) + ' → ' + esc(D.ORDER_STATUS[h.to]) + ' — ' + esc(h.actor) + (h.note ? ' — ' + esc(h.note) : '') + '</li>';
     }).join('') + '</ul></details>' : '';
     return '<article class="card" aria-label="Pedido ' + o.id + '">' +
-      '<div class="row between"><h2>Pedido ' + o.id + '</h2>' + badge(D.ORDER_STATUS[o.status], STATUS_TONE[o.status]) + '</div>' +
+      '<div class="row between"><h2>Pedido ' + o.id + '</h2><div class="row">' +
+      (pay ? badge(D.PAYMENT_STATUS[pay.status] || pay.status, payTone) : '') +
+      badge(D.ORDER_STATUS[o.status], STATUS_TONE[o.status]) + '</div></div>' +
       steps(o) + '<p class="next">' + NEXT_STEP[o.status] + '</p>' + meta +
       (lines ? '<ul class="lines">' + lines + '</ul>' + totalsHtml(v) : '<p class="muted small">Sin productos.</p>') +
       (v.frozen ? '<p class="small muted" style="margin-top:6px">Precios y unidades registrados al confirmar el ' + fdatetime(o.confirmedAt) + '. No cambian si cambia la lista.</p>' : '') +
@@ -469,9 +542,17 @@
 
   function cart() {
     var id = actor().orgId;
-    if (!ui.carts[id]) ui.carts[id] = { lines: {}, orderId: null, windowFrom: '', windowTo: '', notes: '' };
+    var org = D.byId(state.orgs, id);
+    if (!ui.carts[id]) {
+      ui.carts[id] = {
+        lines: {}, orderId: null, windowFrom: '', windowTo: '', notes: '',
+        address: '', zone: (org && org.zona) || '', slot: 'Mañana (08:00 a 12:00)', paymentMethod: 'sipap_qr'
+      };
+    }
     var c = ui.carts[id];
-    // Si el borrador vinculado ya no existe como borrador, el carrito empieza de nuevo.
+    if (!c.paymentMethod) c.paymentMethod = 'sipap_qr';
+    if (!c.slot) c.slot = 'Mañana (08:00 a 12:00)';
+    if (!c.zone && org && org.zona) c.zone = org.zona;
     if (c.orderId) {
       var o = D.byId(state.orders, c.orderId);
       if (!o || o.status !== 'borrador') c.orderId = null;
@@ -551,9 +632,12 @@
   function productCard(p, q, level) {
     var h = level || 'h2';
     var stock = p.orderable && actor().role !== 'visitante' ? '<div>' + availBadge(p) + '</div>' : '';
+    var topTag = p.claims && p.claims.length ? '<span class="top-tag">' + esc(p.claims[0]) + '</span>' : '';
+    var pic = photoBox(p, true).replace('</a>', topTag + '</a>');
     return '<article class="pcard" data-search="' + esc((p.name + ' ' + p.category + ' ' + p.origin + ' ' + p.originDetail + ' ' + p.presentation).toLowerCase()) + '" data-cat="' + esc(p.category) + '" data-name="' + esc(p.name.toLowerCase()) + '" data-av="' + (p.orderable ? p.available : -1) + '">' +
-      photoBox(p, true) + '<div class="body"><div><p class="eyebrow">' + esc(p.category) + '</p><' + h + '><a href="#/producto/' + encodeURIComponent(p.sku) + '">' + esc(p.name) + '</a></' + h + '>' +
-      '<p class="muted small">' + esc(p.presentation) + (p.originDetail ? ' · ' + esc(p.originDetail.replace(/^Marca: /, '')) : '') + '</p></div>' +
+      pic + '<div class="body"><div><p class="eyebrow">' + esc(p.category) + '</p><' + h + '><a href="#/producto/' + encodeURIComponent(p.sku) + '">' + esc(p.name) + '</a></' + h + '>' +
+      '<p class="muted small">' + esc(p.presentation) + '</p>' +
+      '<p class="origin-tag">Por: ' + esc(p.origin) + '</p></div>' +
       '<div class="foot-row">' + priceHtml(p) + stock + buyControls(p, q, true) + '</div></div></article>';
   }
   function cartBar(shop) {
@@ -594,45 +678,65 @@
     var collage = shop.filter(function (p) { return p.photo; }).filter(function (p) { return ['ECO-2148', 'ECO-942', 'ECO-963', 'ECO-770'].indexOf(p.sku) !== -1; });
     if (collage.length < 4) collage = shop.filter(function (p) { return p.photo; }).slice(0, 4);
     var cta = a.role === 'visitante'
-      ? '<a class="btn light lg" href="#/tienda">' + icon('store') + 'Ver la tienda</a><a class="btn ghost lg" href="#/ingresar">' + icon('user') + 'Ingresar</a>'
-      : isBuyer() ? '<a class="btn light lg" href="#/tienda">' + icon('store') + 'Comprar ahora</a><a class="btn ghost lg" href="#/mis-pedidos">Mis pedidos</a>'
-        : '<a class="btn light lg" href="#/tienda">' + icon('store') + 'Ver la tienda</a><a class="btn ghost lg" href="#/panel">' + icon('chart') + 'Ir al panel</a>';
-    var hero = '<section class="shero"><div class="shero-text"><p class="eyebrow">Productos de cooperativas paraguayas</p>' +
+      ? '<a class="btn primary lg" href="#/tienda">' + icon('store') + 'Explorar la tienda</a><a class="btn lg" href="#/ingresar">' + icon('user') + 'Ingresar</a>'
+      : isBuyer() ? '<a class="btn primary lg" href="#/tienda">' + icon('store') + 'Comprar ahora</a><a class="btn lg" href="#/mis-pedidos">' + icon('list') + 'Mis pedidos</a>'
+        : '<a class="btn primary lg" href="#/tienda">' + icon('store') + 'Ver la tienda</a><a class="btn lg" href="#/panel">' + icon('chart') + 'Ir al panel ERP</a>';
+    var hero = '<section class="shero"><div class="shero-text"><p class="eyebrow">' + icon('sprout') + 'Cosechado con respeto a la madre tierra</p>' +
       '<h1>Del campo paraguayo <em>a tu almacén</em></h1>' +
-      '<p class="lead">' + esc(storeName()) + ' reúne la producción de cooperativas y la lleva directo a los almacenes del barrio: pastas, especias, mieles, granos, harinas y yuyos, con stock real y entrega coordinada.</p>' +
-      '<div class="actions">' + cta + '</div></div>' +
+      '<p class="lead">' + esc(storeName()) + ' conecta la producción de cooperativas y agricultura familiar directamente con los almacenes del barrio: stock real verificado en depósito, precio fijo al confirmar y trazabilidad por lote.</p>' +
+      '<div class="actions">' + cta + '</div>' +
+      '<div class="shero-pills"><span>' + icon('check') + 'Stock verificado FEFO</span><span>' + icon('sprout') + 'Comercio justo directo</span><span>' + icon('qr') + 'Pago SIPAP o contra entrega</span></div></div>' +
       '<div class="shero-art" aria-hidden="true">' + collage.slice(0, 4).map(function (p, i) {
         return '<span class="tile t' + i + '"><img src="' + esc(p.photo) + '" alt=""></span>';
-      }).join('') + '</div></section>';
-    var trust = '<ul class="trust">' +
-      '<li>' + icon('leaf') + '<span><b>De cooperativas</b><small>Producción de cooperativas y agricultura familiar del Paraguay</small></span></li>' +
-      '<li>' + icon('box') + '<span><b>Stock real</b><small>Lo que ves disponible ya fue recibido y revisado en el depósito</small></span></li>' +
-      '<li>' + icon('tag') + '<span><b>Precio fijo</b><small>El precio queda confirmado en el momento de tu pedido</small></span></li>' +
-      '<li>' + icon('truck') + '<span><b>Seguimiento</b><small>Ves cada etapa: reservado, en preparación, despachado y entregado</small></span></li></ul>';
+      }).join('') +
+      '<div class="shero-badge"><span class="brand-mark" style="width:34px;height:34px">' + icon('check') + '</span><div><b>Calidad Campesina Garantizada</b><small>Recepción y control lote por lote</small></div></div></div></section>';
+
+    var promoCats = cats.slice(0, 3);
+    var promoClasses = ['p-warm', 'p-rose', 'p-mint'];
+    var promoLabels = ['100% Natural', 'Producción Cooperativa', 'De la Chacra al Almacén'];
+    var promos = promoCats.length ? '<div class="promo-strip">' + promoCats.map(function (k, i) {
+      return '<a class="promo-card ' + promoClasses[i % 3] + '" href="#/tienda/' + encodeURIComponent(k.name) + '">' +
+        '<div><p class="eyebrow">' + promoLabels[i % 3] + '</p><h3>' + esc(k.name) + '</h3>' +
+        '<span class="btn sm primary">Ver ' + k.count + ' productos →</span></div>' +
+        '<span class="pic"><img src="' + esc(k.photo || 'assets/logo-yvy.jpg') + '" alt="" loading="lazy"></span></a>';
+    }).join('') + '</div>' : '';
+
     var catGrid = !cats.length ? '' :
-      '<div class="section-title"><div><p class="eyebrow">Categorías</p><h2>Encontrá lo que buscás</h2></div><a class="more" href="#/tienda">Ver toda la tienda →</a></div><div class="cats">' +
+      '<div class="section-title"><div><p class="eyebrow">Categorías destacadas</p><h2>Explorá la despensa de cooperativas</h2></div><a class="more" href="#/tienda">Ver toda la tienda →</a></div><div class="cats">' +
       cats.map(function (k) {
-        return '<a class="cat" href="#/tienda/' + encodeURIComponent(k.name) + '"><span><b>' + esc(k.name) + '</b><small>' + plural(k.count, 'producto', 'productos') + '</small></span>' +
-          '<span class="pic">' + (k.photo ? '<img src="' + esc(k.photo) + '" alt="" loading="lazy">' : '<img class="ph" src="assets/logo-yvy.jpg" alt="">') + '</span></a>';
+        return '<a class="cat" href="#/tienda/' + encodeURIComponent(k.name) + '"><span class="pic">' +
+          (k.photo ? '<img src="' + esc(k.photo) + '" alt="" loading="lazy">' : '<img class="ph" src="assets/logo-yvy.jpg" alt="">') +
+          '</span><div><b>' + esc(k.name) + '</b><small>' + plural(k.count, 'producto', 'productos') + '</small></div></a>';
       }).join('') + '</div>';
-    var products = '<div class="section-title"><div><p class="eyebrow">Destacados</p><h2>Para conocer y probar</h2></div><a class="more" href="#/tienda">Ver todos →</a></div>' +
+
+    var products = '<div class="section-title"><div><p class="eyebrow">Productos populares</p><h2>Para conocer y pedir hoy</h2></div><a class="more" href="#/tienda">Ver todos →</a></div>' +
       (shop.length ? '<div class="pgrid">' + featured.map(function (p) { return productCard(p, c.lines[p.sku] || 0, 'h3'); }).join('') + '</div>' : '<p class="empty">Todavía no hay productos en la tienda.</p>');
+
     var recs = allRecipes(shop);
-    var recipes = !recs.length ? '' : '<div class="section-title"><div><p class="eyebrow">Recetas</p><h2>Ideas para cocinar con nuestros productos</h2></div></div>' +
+    var recipes = !recs.length ? '' : '<div class="section-title"><div><p class="eyebrow">Recetas del campo</p><h2>Ideas para cocinar con nuestros productos</h2></div></div>' +
       '<div class="rgrid">' + recs.slice(0, 6).map(function (x) { return recipeCard(x.r, x.p); }).join('') + '</div>';
+
+    var trust = '<ul class="trust">' +
+      '<li>' + icon('truck') + '<span><b>Entregas coordinadas</b><small>Ventana de entrega programada y seguimiento paso a paso</small></span></li>' +
+      '<li>' + icon('sprout') + '<span><b>Comercio justo</b><small>Conectamos directamente a cooperativas y familias productoras</small></span></li>' +
+      '<li>' + icon('box') + '<span><b>Stock real FEFO</b><small>Solo reservamos mercadería recibida y liberada en depósito</small></span></li>' +
+      '<li>' + icon('qr') + '<span><b>Pago flexible</b><small>Instrucción QR SIPAP, transferencia bancaria o contra entrega</small></span></li></ul>';
+
     var how = '<section class="band"><p class="eyebrow">Cómo comprar</p><h2>Tu almacén abastecido en tres pasos</h2><ol class="steps3">' +
-      '<li><b>Pedí tu cuenta</b><span>Yvy Guaraní registra tu almacén y te da un usuario para ingresar.</span></li>' +
-      '<li><b>Armá tu pedido</b><span>Elegí productos con precio y disponibilidad real, desde el celular o la computadora.</span></li>' +
-      '<li><b>Seguilo hasta tu puerta</b><span>Al confirmar, el stock queda reservado. Ves cuándo se prepara, sale y se entrega.</span></li></ol></section>';
+      '<li><b>Pedí tu cuenta</b><span>Yvy Guaraní registra tu almacén y te da un usuario para ver precios mayoristas.</span></li>' +
+      '<li><b>Armá tu pedido</b><span>Elegí productos con stock real, definí dirección de entrega y forma de pago.</span></li>' +
+      '<li><b>Seguilo hasta tu puerta</b><span>Al confirmar se reserva tu stock. Seguís preparación, despacho y entrega.</span></li></ol></section>';
+
     var coops = orgs('cooperativa').filter(function (o) { return o.active !== false; });
     var nav = NAV[a.role] || [];
-    var foot = '<footer class="sitefoot"><div class="cols"><div><p class="brandline"><img src="assets/logo-yvy.jpg" alt="">' + esc(storeName()) + '</p>' +
-      '<p>Una iniciativa de Yvy Guaraní S.A. para acercar la producción de las cooperativas a los almacenes de barrio.</p></div>' +
+    var foot = '<footer class="sitefoot"><div class="cols"><div><p class="brandline">' + brandMarkHtml() + '<span>' + esc(storeName()) + '</span></p>' +
+      '<p class="small">Empresa paraguaya comprometida con acercar la producción de cooperativas y agricultura familiar a los almacenes de barrio.</p>' +
+      '<div class="pay-pills"><span>QR SIPAP / SPI</span><span>Transferencia</span><span>Contra entrega</span></div></div>' +
       '<div><h3>Tienda</h3><ul>' + nav.filter(function (n) { return n[0] !== 'inicio'; }).slice(0, 5).map(function (n) { return '<li><a href="#/' + n[0] + '">' + esc(n[1]) + '</a></li>'; }).join('') + '</ul></div>' +
       '<div><h3>Categorías</h3><ul>' + cats.slice(0, 6).map(function (k) { return '<li><a href="#/tienda/' + encodeURIComponent(k.name) + '">' + esc(k.name) + '</a></li>'; }).join('') + '</ul></div>' +
       '<div><h3>Cooperativas</h3><ul>' + coops.map(function (o) { return '<li>' + esc(o.name) + '</li>'; }).join('') + '</ul></div></div>' +
-      '<p class="legal"><span>© ' + new Date().getFullYear() + ' Yvy Guaraní S.A.</span><span>Fotos de productos: Ecoagro.</span></p></footer>';
-    return hero + trust + catGrid + products + recipes + how + foot + cartBar(shop);
+      '<p class="legal"><span>© ' + new Date().getFullYear() + ' Yvy Guaraní S.A. · Asunción, Paraguay</span><span>Fotos de catálogo inicial: Ecoagro · <a href="#/ayuda">Central de Ayuda</a></span></p></footer>';
+    return hero + catGrid + promos + products + recipes + trust + how + foot + cartBar(shop);
   }
 
   function pageTienda() {
@@ -708,12 +812,48 @@
       '<div class="pd-sections">' + sections + '</div>' + related + cartBar(shop);
   }
 
+  /** Genera una matriz SVG determinística de referencia visual para la instrucción QR SIPAP (sin dependencias). */
+  function sipapQrSvg(seedText) {
+    var h = 2166136261;
+    for (var i = 0; i < seedText.length; i++) { h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619); }
+    var size = 21;
+    var rects = [];
+    var finder = function (ox, oy) {
+      rects.push('<rect x="' + ox + '" y="' + oy + '" width="7" height="7" rx="1.2" fill="#1e1b19"/>');
+      rects.push('<rect x="' + (ox + 1) + '" y="' + (oy + 1) + '" width="5" height="5" rx="0.6" fill="#fff"/>');
+      rects.push('<rect x="' + (ox + 2) + '" y="' + (oy + 2) + '" width="3" height="3" rx="0.4" fill="#006b2c"/>');
+    };
+    finder(0, 0); finder(14, 0); finder(0, 14);
+    for (var y = 0; y < size; y++) {
+      for (var x = 0; x < size; x++) {
+        var inFinder = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+        var inCenter = x >= 8 && x <= 12 && y >= 8 && y <= 12;
+        if (inFinder || inCenter) continue;
+        h = Math.imul(h ^ (x * 31 + y * 17), 16777619) >>> 0;
+        if ((h & 3) === 0 || ((x + y) % 5 === 0 && (h & 1))) {
+          rects.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" rx="0.2" fill="#1e1b19"/>');
+        }
+      }
+    }
+    rects.push('<circle cx="10.5" cy="10.5" r="2.6" fill="#006b2c"/><path d="M10.5 11.7V9.7m0 0c0-1 .8-1.4 1.6-1.4 0 .9-.5 1.4-1.6 1.4zm0 .6c0-.7-.6-1.2-1.4-1.2 0 .7.5 1.2 1.4 1.2z" stroke="#fff" stroke-width="0.45" fill="none" stroke-linecap="round"/>');
+    return '<svg viewBox="-1 -1 23 23" role="img" aria-label="Código QR de instrucción SIPAP">' + rects.join('') + '</svg>';
+  }
+
+  function checkoutStepper(step) {
+    var items = [[1, '1. Carrito y Entrega'], [2, '2. Pago SIPAP'], [3, '3. Confirmación']];
+    return '<div class="ck-steps" role="list" aria-label="Pasos del pedido">' + items.map(function (it, idx) {
+      var cls = it[0] < step ? 'done' : it[0] === step ? 'now' : '';
+      return (idx ? '<span class="ck-sep" aria-hidden="true">›</span>' : '') +
+        '<span class="ck-step ' + cls + '" role="listitem">' + (it[0] < step ? icon('check') : '') + esc(it[1]) + '</span>';
+    }).join('') + '</div>';
+  }
+
   function pageMiPedido() {
     var shop = D.storefront(state, today());
     var c = cart();
     var chosen = shop.filter(function (p) { return (c.lines[p.sku] || 0) > 0 && p.orderable; });
     if (!chosen.length) {
-      return head('Mi pedido') + '<p class="empty">Tu pedido está vacío. <a href="#/tienda">Ir a la tienda</a></p>';
+      return head('Mi pedido', 'Revisá tu canasta y coordiná la entrega.') + '<p class="empty">Tu pedido está vacío. <a href="#/tienda">Ir a la tienda</a></p>';
     }
     var subtotal = 0;
     var problem = false;
@@ -721,25 +861,132 @@
       var q = c.lines[p.sku];
       subtotal += q * p.price;
       if (q > p.available) problem = true;
-      return '<article class="card"><div class="row between"><div><h2>' + esc(p.name) + '</h2><p class="small muted">' + esc(p.presentation) + ' · ' + gs(p.price) + ' por ' + esc(D.unitLabel(p.unit, 1)) + '</p></div>' +
-        '<b class="num">' + gs(q * p.price) + '</b></div><div style="margin-top:8px">' + qtyControl(p, q) + '</div>' +
+      return '<article class="card"><div class="row between"><div class="row">' +
+        '<img class="pthumb" src="' + esc(p.photo || 'assets/logo-yvy.jpg') + '" alt="">' +
+        '<div><h3>' + esc(p.name) + '</h3><p class="small muted">' + esc(p.presentation) + ' · ' + gs(p.price) + ' por ' + esc(D.unitLabel(p.unit, 1)) + '</p></div></div>' +
+        '<b class="num" style="color:var(--brand);font-size:1.05rem">' + gs(q * p.price) + '</b></div><div style="margin-top:10px">' + qtyControl(p, q) + '</div>' +
         (q > p.available ? '<p class="note bad small" style="margin-top:8px">Hay ' + qty(p.available, p.unit) + ' disponibles. Bajá la cantidad o el pedido completo será rechazado.</p>' : '') +
         '</article>';
     }).join('');
     var fee = state.settings.deliveryFee;
-    return head('Mi pedido', 'Revisá cantidades y confirmá. Al confirmar se reserva el stock y se fijan estos precios.') +
-      '<div class="stack">' + lines +
-      '<section class="card"><h2>Entrega</h2><div class="form">' +
+    var payMethod = c.paymentMethod || 'sipap_qr';
+    var payOptions = [
+      ['sipap_qr', 'QR SIPAP / SPI (BCP)', 'Al confirmar verás el código QR y los datos de cuenta para transferir. Validación manual por Administración (integración bancaria automática en preparación).'],
+      ['transferencia', 'Transferencia bancaria tradicional', 'Transferí desde tu banco o cooperativa y reportá el número de comprobante.'],
+      ['contra_entrega', 'Pago contra entrega', 'Abonás en efectivo o transferencia al recibir el pedido en tu almacén.']
+    ].map(function (opt) {
+      var on = payMethod === opt[0];
+      return '<label class="pay-opt' + (on ? ' on' : '') + '"><input type="radio" name="paymentMethod" value="' + opt[0] + '" data-cart-field="paymentMethod"' + (on ? ' checked' : '') + '>' +
+        '<div><b>' + esc(opt[1]) + '</b><small>' + esc(opt[2]) + '</small></div></label>';
+    }).join('');
+    var slots = ['Mañana (08:00 a 12:00)', 'Tarde (13:30 a 17:30)', 'Horario comercial a coordinar'];
+    var leftCol = '<div class="stack">' + lines +
+      '<section class="card"><h2>Dirección y ventana de entrega</h2><div class="form">' +
+      field('Dirección de entrega', input('address', 'text', c.address || '', 'data-cart-field="address" placeholder="Calle, número, esquina o referencia"'), 'Opcional', 'wide') +
+      field('Barrio / Zona', input('zone', 'text', c.zone || '', 'data-cart-field="zone" placeholder="Ej. Las Mercedes, San Lorenzo, Luque"')) +
+      field('Franja horaria', select('slot', slots.map(function (s) { return [s, s]; }), c.slot || slots[0], 'data-cart-field="slot"')) +
       field('Entrega deseada: desde', input('windowFrom', 'date', c.windowFrom, 'data-cart-field="windowFrom" min="' + today() + '"'), 'Opcional') +
       field('Hasta', input('windowTo', 'date', c.windowTo, 'data-cart-field="windowTo" min="' + today() + '"'), 'Opcional') +
-      field('Observaciones', '<textarea name="notes" data-cart-field="notes">' + esc(c.notes) + '</textarea>', 'Opcional. Horarios, referencias del local.', 'wide') +
+      field('Observaciones', '<textarea name="notes" data-cart-field="notes" placeholder="Horario de recepción, portón, teléfono alternativo">' + esc(c.notes) + '</textarea>', 'Opcional', 'wide') +
       '</div></section>' +
-      '<section class="card"><h2>Total</h2>' + totalsHtml({ subtotal: subtotal, deliveryFee: fee, total: subtotal + (fee || 0) }) +
-      '<p class="small muted" style="margin-top:6px">El pago y la factura se coordinan con Yvy Guaraní al momento de la entrega.</p>' +
-      (problem ? '<p class="note bad" style="margin-top:10px">Hay productos con más cantidad que la disponible. No se reserva en forma parcial: corregí las cantidades para confirmar.</p>' : '') +
+      '<section class="card"><h2>Forma de pago</h2><p class="small muted" style="margin-bottom:12px">Se guarda en el pedido al confirmar. El stock se reserva de inmediato.</p>' +
+      '<div class="pay-opts">' + payOptions + '</div></section></div>';
+
+    var rightCol = '<aside class="card ck-summary"><h2>Resumen del pedido</h2>' +
+      '<p class="small muted" style="margin-bottom:10px">' + plural(chosen.length, 'producto', 'productos') + ' seleccionados</p>' +
+      totalsHtml({ subtotal: subtotal, deliveryFee: fee, total: subtotal + (fee || 0) }) +
+      '<p class="note small" style="margin-top:12px">Al confirmar se reserva el stock FEFO y se fijan estos precios.</p>' +
+      (problem ? '<p class="note bad small" style="margin-top:10px">Hay productos con más cantidad que la disponible. Corregí las cantidades para confirmar.</p>' : '') +
       '<div class="form-error" role="alert" id="cart-error" style="margin-top:10px"></div>' +
-      '<div class="actions" style="margin-top:12px"><button class="btn primary" type="button" data-act="cart-confirm">Confirmar pedido</button>' +
-      '<button class="btn" type="button" data-act="cart-clear">Vaciar</button></div></section></div>';
+      '<div class="actions" style="margin-top:14px"><button class="btn primary lg wide" type="button" data-act="cart-confirm">' +
+      (payMethod === 'contra_entrega' ? 'Confirmar pedido' : 'Confirmar y continuar al pago →') + '</button>' +
+      '<button class="btn wide" type="button" data-act="cart-clear">Vaciar canasta</button></div></aside>';
+
+    return checkoutStepper(1) + head('Mi pedido y entrega', 'Revisá cantidades, dirección y forma de pago antes de reservar stock.') +
+      '<div class="ck-grid">' + leftCol + rightCol + '</div>';
+  }
+
+  function pagePago() {
+    var orderId = route().param;
+    var o = D.byId(state.orders, orderId);
+    if (!o) return head('Pago del pedido') + '<p class="empty">No encontramos el pedido solicitado. <a href="#/mis-pedidos">Ver mis pedidos</a></p>';
+    var v = D.orderView(state, o, today());
+    var pay = o.payment || { method: 'sipap_qr', status: 'pendiente', ref: '' };
+    var s = state.settings;
+    var alias = s.sipapAlias || '80094120-4 (RUC Yvy Guaraní S.A.)';
+    var bank = s.sipapBank || 'Banco a definir en Configuración → Datos de cobro SIPAP';
+    var holder = s.sipapHolder || 'Yvy Guaraní S.A.';
+    var emvCode = 'SIPAP-PY|YVY|' + o.id + '|PYG|' + (v.total || 0) + '|' + alias.replace(/\s+/g, '');
+    var alreadyPaid = pay.status === 'acreditado';
+    var inReview = pay.status === 'en_verificacion';
+    var payBadge = badge(D.PAYMENT_STATUS[pay.status] || 'Pendiente', alreadyPaid ? 'ok' : inReview ? 'warn' : '');
+
+    var qrCard = '<section class="card qr-card">' +
+      '<div class="row between" style="width:100%"><div style="text-align:left"><p class="eyebrow">Instrucción de cobro SIPAP / SPI</p><h2>Aboná con QR SIPAP o Transferencia</h2></div>' + payBadge + '</div>' +
+      '<p class="note warn small" style="width:100%;text-align:left"><b>Integración bancaria automática en preparación:</b> este QR y los datos de cuenta sirven como instrucción de pago. Una vez que transfieras, avisá con el botón de abajo y <b>Administración confirma la acreditación manualmente</b>.</p>' +
+      '<div class="qr-amount"><div><span class="eyebrow">Importe exacto</span><div class="val">' + gs(v.total || 0) + '</div></div>' +
+      '<div style="text-align:right"><b>Ref.: ' + esc(o.id) + '</b><br><small class="muted">' + esc(D.PAYMENT_METHODS[pay.method] || 'QR SIPAP / SPI') + '</small></div></div>' +
+      '<div class="qr-box">' + sipapQrSvg(emvCode) + '<small class="muted">Referencia visual de cobro · ' + esc(o.id) + '</small></div>' +
+      '<div class="actions" style="justify-content:center"><button class="btn soft" type="button" data-act="copiar-sipap" data-code="' + esc(emvCode) + '">' + icon('copy') + 'Copiar código SIPAP</button>' +
+      '<a class="btn" href="#/pedido-confirmado/' + encodeURIComponent(o.id) + '">Ver resumen del pedido</a></div>' +
+      '<div class="qr-steps">' +
+      '<div><b><i>1</i>Abrí tu app bancaria</b>Ingresá a tu banco o billetera habilitada en SIPAP / SPI.</div>' +
+      '<div><b><i>2</i>Transferí el monto exacto</b>Usá el alias o cuenta de abajo e indicá ' + esc(o.id) + ' en el concepto.</div>' +
+      '<div><b><i>3</i>Informá el comprobante</b>Presioná el botón para que Administración verifique el pago.</div></div>' +
+      '<details style="width:100%;text-align:left;background:var(--surface-low);padding:12px 16px;border-radius:14px" open><summary>Datos para transferencia bancaria / SIPAP</summary>' +
+      '<dl class="kv" style="margin-top:8px"><dt>Titular</dt><dd>' + esc(holder) + '</dd><dt>Alias / RUC</dt><dd><code>' + esc(alias) + '</code></dd><dt>Entidad</dt><dd>' + esc(bank) + '</dd><dt>Concepto</dt><dd><code>Pedido ' + esc(o.id) + '</code></dd></dl></details>' +
+      (alreadyPaid
+        ? '<p class="note" style="width:100%;text-align:left"><b>Pago acreditado.</b> Confirmado por ' + esc(pay.confirmedBy || 'Administración') + (pay.ref ? ' · Ref: ' + esc(pay.ref) : '') + '.</p>'
+        : '<form class="form" data-form="informar-pago" style="width:100%;text-align:left" novalidate>' +
+          '<input type="hidden" name="orderId" value="' + esc(o.id) + '">' +
+          '<input type="hidden" name="method" value="' + esc(pay.method) + '">' +
+          field('Nº de comprobante / referencia SIPAP (opcional)', input('ref', 'text', pay.ref || '', 'placeholder="Ej. SPI-774912 o últimos 6 dígitos"'), '', 'wide') +
+          '<div class="form-error" role="alert"></div>' +
+          '<button class="btn primary lg wide" type="submit">' + icon('check') + (inReview ? 'Actualizar comprobante informado' : 'Ya realicé la transferencia / Informar pago') + '</button></form>') +
+      '</section>';
+
+    var summaryCard = '<aside class="card ck-summary"><h2>Resumen del pedido ' + esc(o.id) + '</h2>' +
+      '<p class="small muted">' + esc(orgName(o.almacenId)) + ' · ' + badge(D.ORDER_STATUS[o.status], STATUS_TONE[o.status]) + '</p>' +
+      '<ul class="lines">' + v.lines.map(function (ln) {
+        return '<li><div><b>' + esc(ln.name) + '</b><br><small class="muted">' + esc(qty(ln.qty, ln.unit)) + ' × ' + gs(ln.unitPrice) + '</small></div><div>' + gs(ln.lineTotal) + '</div></li>';
+      }).join('') + '</ul>' + totalsHtml(v) +
+      (o.checkout && (o.checkout.address || o.checkout.zone) ? '<div class="note small" style="margin-top:12px"><b>Entrega:</b> ' + esc([o.checkout.address, o.checkout.zone, o.checkout.slot].filter(Boolean).join(' · ')) + '</div>' : '') +
+      '<div class="actions" style="margin-top:12px"><a class="btn wide" href="#/' + (isBuyer() ? 'mis-pedidos' : 'pedidos') + '">Volver a pedidos</a></div></aside>';
+
+    return checkoutStepper(2) + '<div class="ck-grid">' + qrCard + summaryCard + '</div>';
+  }
+
+  function pagePedidoConfirmado() {
+    var orderId = route().param;
+    var o = D.byId(state.orders, orderId);
+    if (!o) return head('Pedido confirmado') + '<p class="empty">No encontramos ese pedido. <a href="#/mis-pedidos">Ir a mis pedidos</a></p>';
+    var v = D.orderView(state, o, today());
+    var pay = o.payment || { method: 'contra_entrega', status: 'pendiente', ref: '' };
+    var payTone = pay.status === 'acreditado' ? 'ok' : pay.status === 'en_verificacion' ? 'warn' : 'info';
+
+    return checkoutStepper(3) + '<div class="stack">' +
+      '<section class="confirm-hero">' +
+      '<div class="confirm-icon">' + icon('check') + '</div>' +
+      '<p class="eyebrow">¡Mba\'eporãite! Stock reservado</p>' +
+      '<h1>¡Aguyje por tu compra!</h1>' +
+      '<p class="muted" style="max-width:52ch">Tu pedido quedó confirmado con precios fijos y el stock ya está reservado en depósito para preparación.</p>' +
+      '<div class="confirm-id"><span>Pedido #' + esc(o.id) + '</span>' + badge(D.ORDER_STATUS[o.status], STATUS_TONE[o.status]) + '</div>' +
+      '<p class="row" style="justify-content:center;margin-top:6px">' + badge((D.PAYMENT_METHODS[pay.method] || pay.method) + ' · ' + (D.PAYMENT_STATUS[pay.status] || pay.status), payTone) + '</p>' +
+      '</section>' +
+      '<div class="cols-2"><section class="card"><h2>Estado y entrega</h2>' + steps(o) +
+      '<p class="next">' + NEXT_STEP[o.status] + '</p><dl class="kv">' +
+      '<dt>Almacén</dt><dd>' + esc(orgName(o.almacenId)) + '</dd>' +
+      '<dt>Ventana deseada</dt><dd>' + win(o.windowFrom, o.windowTo) + (o.checkout && o.checkout.slot ? ' · ' + esc(o.checkout.slot) : '') + '</dd>' +
+      (o.checkout && (o.checkout.address || o.checkout.zone) ? '<dt>Dirección</dt><dd>' + esc([o.checkout.address, o.checkout.zone].filter(Boolean).join(' · ')) + '</dd>' : '') +
+      (pay.ref ? '<dt>Comprobante informado</dt><dd><code>' + esc(pay.ref) + '</code></dd>' : '') +
+      '</dl></section>' +
+      '<section class="card"><h2>Productos del pedido</h2><ul class="lines">' + v.lines.map(function (ln) {
+        return '<li><div><b>' + esc(ln.name) + '</b><br><small class="muted">' + esc(qty(ln.qty, ln.unit)) + ' × ' + gs(ln.unitPrice) + '</small></div><div>' + gs(ln.lineTotal) + '</div></li>';
+      }).join('') + '</ul>' + totalsHtml(v) + '</section></div>' +
+      '<div class="actions" style="justify-content:center">' +
+      (pay.status !== 'acreditado' && pay.method !== 'contra_entrega' ? '<a class="btn soft lg" href="#/pago/' + encodeURIComponent(o.id) + '">' + icon('qr') + 'Ver instrucción QR SIPAP</a>' : '') +
+      '<a class="btn primary lg" href="#/' + (isBuyer() ? 'mis-pedidos' : 'pedidos') + '">' + icon('list') + 'Ver mis pedidos</a>' +
+      '<a class="btn lg" href="#/tienda">' + icon('store') + 'Seguir explorando la tienda</a></div></div>';
   }
   function pageMisPedidos() {
     return head('Mis pedidos', 'Estado de cada pedido de ' + esc(orgName(actor().orgId)) + '.') +
@@ -1188,42 +1435,93 @@
     var t = today();
     var editable = can('lote.ajustar');
     var limit = D.addDays(t, state.settings.nearExpiryDays);
-    var blocks = state.products.filter(function (p) {
+    var activeProds = state.products.filter(function (p) {
       return p.status === 'activo' || state.lots.some(function (l) { return l.sku === p.sku; });
-    }).map(function (p) {
+    });
+    var totFis = 0, totDisp = 0, totRes = 0, totBloq = 0, totNear = 0;
+    activeProds.forEach(function (p) {
+      var s = D.stockSummary(state, p.sku, t);
+      totFis += s.fisico; totDisp += s.disponible; totRes += s.reservado; totBloq += s.bloqueado;
+    });
+    state.lots.forEach(function (l) {
+      if (l.expiry && l.liberado + l.bloqueado > 0 && l.expiry <= limit) totNear += l.liberado + l.bloqueado;
+    });
+    var kpis = '<div class="mkpis">' +
+      mkpi('box', 'Stock físico real', D.fmtInt(totFis), '', 'Unidades en depósito entre todos los lotes.') +
+      mkpi('check', 'Vendible / Disponible', D.fmtInt(totDisp), '', 'Listo para reservar en nuevos pedidos.', 'ok') +
+      mkpi('cart', 'Reservado despacho', D.fmtInt(totRes), '', 'Apartado por pedidos confirmados.') +
+      mkpi('alert', 'Bloqueado / Por vencer', D.fmtInt(totBloq) + ' / ' + D.fmtInt(totNear), '', 'Requiere control FEFO o revisión de calidad.', (totBloq || totNear) ? 'warn' : '') + '</div>';
+    var q = (ui.stockQ || '').trim().toLowerCase();
+    var catF = ui.stockCat || '';
+    var filtered = activeProds.filter(function (p) {
+      var cat = D.byId(state.categories, p.categoryId);
+      var hay = (p.name + ' ' + p.sku + ' ' + (cat ? cat.name : '')).toLowerCase();
+      return (!q || hay.indexOf(q) !== -1) && (!catF || p.categoryId === catF);
+    });
+    var filterBar = '<div class="shopbar card" style="padding:12px 16px">' +
+      '<label class="search"><span class="sr-only">Buscar stock</span>' + icon('search') +
+      '<input type="search" id="stock-search" value="' + esc(ui.stockQ || '') + '" placeholder="Filtrar por producto, SKU o categoría…" autocomplete="off"></label>' +
+      '<label class="sort"><span class="sr-only">Categoría</span><select data-change="stock-cat"><option value="">Todas las categorías</option>' +
+      state.categories.map(function (c) { return '<option value="' + c.id + '"' + (c.id === catF ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') +
+      '</select></label><span class="badge ok">' + icon('check') + 'Regla FEFO activa</span></div>';
+
+    var blocks = filtered.map(function (p) {
       var s = D.stockSummary(state, p.sku, t);
       var lots = D.fefoLots(state, p.sku, t).concat(state.lots.filter(function (l) { return l.sku === p.sku && D.lotAvailable(l, t) === 0; }));
       var rows = lots.map(function (l, i) {
         var expired = D.isExpired(l, t);
         var st = expired ? badge('Vencido', 'bad') : l.expiry && l.expiry <= limit ? badge('Por vencer', 'warn') : '';
-        var fefo = D.lotAvailable(l, t) > 0 && i === 0 ? badge('Sale primero', 'info') : '';
+        var fefo = D.lotAvailable(l, t) > 0 && i === 0 ? badge('Sale primero (FEFO)', 'ok') : '';
         var b = function (act, label) { return '<button class="btn sm" type="button" data-act="' + act + '" data-id="' + l.id + '">' + label + '</button>'; };
         var actions = editable ? '<div class="actions">' + (l.liberado - l.reserved > 0 ? b('lote-bloquear', 'Bloquear…') : '') + (l.bloqueado > 0 && !expired ? b('lote-liberar', 'Liberar…') : '') + b('lote-ajustar', 'Ajustar…') + '</div>' : '';
-        return ['<b>' + esc(l.code) + '</b> ' + fefo, fdate(l.expiry) + ' ' + st, '<b class="num">' + D.lotAvailable(l, t) + '</b>', String(l.reserved), String(l.liberado),
+        return ['<b>' + esc(l.code) + '</b> ' + fefo, fdate(l.expiry) + ' ' + st, '<b class="num" style="color:var(--brand)">' + D.lotAvailable(l, t) + '</b>', String(l.reserved), String(l.liberado),
           l.bloqueado ? l.bloqueado + '<br><small class="muted">' + esc(l.blockReason) + '</small>' : '0', actions];
       });
-      return '<section class="card"><div class="row between"><h2>' + esc(p.name) + ' <small class="muted">' + esc(p.sku) + ' · ' + esc(p.presentation) + '</small></h2>' +
-        (s.disponible > 0 ? badge('Disponible', 'ok') : badge('Sin stock vendible', 'warn')) + '</div>' + stockLine(s, p.stockUnit) +
-        '<div style="margin-top:10px">' + table(['Lote', 'Vence', 'Disponible', 'Reservado', 'Liberado', 'Bloqueado', ''], rows, 'Sin lotes recibidos. La oferta informada por las cooperativas no cuenta como stock.') + '</div></section>';
+      return '<section class="card"><div class="row between"><div class="row"><img class="pthumb" src="' + esc(p.photo || 'assets/logo-yvy.jpg') + '" alt="">' +
+        '<div><h2>' + esc(p.name) + ' <small class="muted">' + esc(p.sku) + ' · ' + esc(p.presentation) + '</small></h2>' + stockLine(s, p.stockUnit) + '</div></div>' +
+        (s.disponible > 0 ? badge('Disponible', 'ok') : badge('Sin stock vendible', 'warn')) + '</div>' +
+        '<div style="margin-top:12px">' + table(['Lote', 'Vence', 'Disponible', 'Reservado', 'Liberado', 'Bloqueado', ''], rows, 'Sin lotes recibidos. La oferta informada por las cooperativas no cuenta como stock.') + '</div></section>';
     }).join('');
-    return head('Stock', 'Por producto y por lote. Los lotes vendibles se ordenan por vencimiento más cercano (FEFO). Reservar no es salida física.') +
-      '<div class="stack">' + (blocks || '<p class="empty">Sin productos activos.</p>') + '</div>';
+    return head('Control de Stock & Trazabilidad FEFO', 'Por producto y por lote. Los lotes vendibles se ordenan por vencimiento más cercano (FEFO). Reservar no es salida física.',
+      can('recepcion.registrar') ? '<a class="btn primary" href="#/recepcion">' + icon('inbox') + 'Registrar recepción</a>' : '') +
+      '<div class="stack">' + kpis + filterBar + (blocks || '<p class="empty">Ningún producto coincide con este filtro.</p>') + '</div>';
   }
 
   function pagePedidos() {
-    var filters = [['activos', 'En curso'], ['borrador', 'Borradores'], ['despachado', 'Despachados'], ['entregado', 'Entregados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']];
+    var filters = [['activos', 'En curso'], ['pendiente_pago', 'Por verificar pago'], ['borrador', 'Borradores'], ['despachado', 'Despachados'], ['entregado', 'Entregados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']];
     var f = ui.orderFilter;
+    var q = (ui.orderQ || '').trim().toLowerCase();
+    var cnt = { prep: 0, desp: 0, entr: 0, verif: 0, total: state.orders.length };
+    state.orders.forEach(function (o) {
+      if (o.status === 'reservado' || o.status === 'en_preparacion') cnt.prep++;
+      if (o.status === 'despachado') cnt.desp++;
+      if (o.status === 'entregado') cnt.entr++;
+      if (o.status !== 'cancelado' && o.payment && o.payment.status === 'en_verificacion') cnt.verif++;
+    });
+    var kpis = '<div class="mkpis">' +
+      mkpi('list', 'Total pedidos', D.fmtInt(cnt.total), '', 'Historial completo registrado en el servidor.') +
+      mkpi('box', 'Por preparar / en armado', D.fmtInt(cnt.prep), '', 'Stock ya reservado por regla FEFO.') +
+      mkpi('truck', 'Despachados / Entregados', D.fmtInt(cnt.desp) + ' / ' + D.fmtInt(cnt.entr), '', 'En tránsito y completados.', 'ok') +
+      mkpi('qr', 'Verificación SIPAP manual', D.fmtInt(cnt.verif), '', 'Comprobantes informados por clientes esperando validación.', cnt.verif ? 'warn' : '') + '</div>';
     var list = state.orders.filter(function (o) {
-      if (f === 'todos') return true;
-      if (f === 'activos') return o.status === 'reservado' || o.status === 'en_preparacion' || o.status === 'despachado';
-      return o.status === f;
+      if (f === 'pendiente_pago' && !(o.status !== 'cancelado' && o.payment && o.payment.status === 'en_verificacion')) return false;
+      else if (f === 'activos' && !(o.status === 'reservado' || o.status === 'en_preparacion' || o.status === 'despachado')) return false;
+      else if (f !== 'todos' && f !== 'activos' && f !== 'pendiente_pago' && o.status !== f) return false;
+      if (q) {
+        var hay = (o.id + ' ' + orgName(o.almacenId) + ' ' + (o.notes || '') + ' ' + (o.payment && o.payment.ref ? o.payment.ref : '')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
     });
     var chips = '<div class="chips" role="group" aria-label="Filtrar pedidos">' + filters.map(function (x) {
-      return '<button class="chip" type="button" data-act="filtro-pedidos" data-id="' + x[0] + '" aria-pressed="' + (x[0] === f) + '">' + x[1] + '</button>';
+      return '<button class="chip" type="button" data-act="filtro-pedidos" data-id="' + x[0] + '" aria-pressed="' + (x[0] === f) + '">' + x[1] +
+        (x[0] === 'pendiente_pago' && cnt.verif ? '<span class="cnt">' + cnt.verif + '</span>' : '') + '</button>';
     }).join('') + '</div>';
-    var nuevo = can('pedido.guardarBorrador') ? '<button class="btn primary" type="button" data-act="nuevo-pedido">Nuevo pedido…</button>' : '';
-    return head('Pedidos', 'Borrador → Reservado → En preparación → Despachado → Entregado. Se puede cancelar hasta antes del despacho.', nuevo) +
-      '<div class="stack">' + chips + orderList(list, 'No hay pedidos en esta vista.') + '</div>';
+    var searchBox = '<div class="shopbar" style="margin-bottom:0"><label class="search"><span class="sr-only">Buscar pedido</span>' + icon('search') +
+      '<input type="search" id="order-search" value="' + esc(ui.orderQ || '') + '" placeholder="Buscar por Nº de pedido (P-0001), almacén o referencia SIPAP…" autocomplete="off"></label></div>';
+    var nuevo = can('pedido.guardarBorrador') ? '<button class="btn primary" type="button" data-act="nuevo-pedido">' + icon('cart') + 'Nuevo pedido…</button>' : '';
+    return head('Gestión y Control de Pedidos', 'Borrador → Reservado → En preparación → Despachado → Entregado. Incluye seguimiento de pagos SIPAP/transferencia con confirmación manual.', nuevo) +
+      '<div class="stack">' + kpis + chips + searchBox + orderList(list, 'No hay pedidos en esta vista.') + '</div>';
   }
 
   function pageCruce() {
@@ -1263,49 +1561,94 @@
   }
 
   function pagePrecios() {
-    var cards = state.products.filter(function (p) { return p.status !== 'inactivo'; }).map(function (p) {
+    var prods = state.products.filter(function (p) { return p.status !== 'inactivo'; });
+    var priced = prods.filter(function (p) { return p.pricing.precioAlmacen !== null; });
+    var shareVals = prods.map(function (p) { return D.priceIndicators(p.pricing).participacionProductor; }).filter(function (v) { return v !== null; });
+    var avgProdShare = shareVals.length ? shareVals.reduce(function (a, b) { return a + b; }, 0) / shareVals.length : null;
+    var marginVals = prods.map(function (p) { return D.priceIndicators(p.pricing).margenDistribuidora; }).filter(function (v) { return v !== null; });
+    var avgMargin = marginVals.length ? marginVals.reduce(function (a, b) { return a + b; }, 0) / marginVals.length : null;
+
+    var kpis = '<div class="mkpis">' +
+      mkpi('tag', 'Productos con precio', D.fmtInt(priced.length) + ' / ' + D.fmtInt(prods.length), '', 'Solo los productos con precio al almacén se pueden pedir.', priced.length ? 'ok' : 'warn') +
+      mkpi('sprout', 'Retorno promedio al productor', avgProdShare === null ? 'Sin datos' : pct(avgProdShare), '', 'Parte del precio sugerido que vuelve a la cooperativa.', 'ok') +
+      mkpi('chart', 'Margen distribuidora prom.', avgMargin === null ? 'Sin datos' : pct(avgMargin), '', 'Calculado sobre precio al almacén (cuando hay costos cargados).') +
+      mkpi('trend', 'Monitor retail externo', 'En preparación', '', 'Comparativa automática con cadenas retail aún no conectada.') + '</div>';
+
+    var cards = prods.map(function (p) {
       var pr = p.pricing;
       var k = D.priceIndicators(pr);
       var v = function (n) { return n === null ? '<span class="muted">Sin datos</span>' : gs(n); };
       var unit = D.unitLabel(p.saleUnit, 1);
+      var fairBar = '';
+      if (pr.precioSugerido && pr.costoProveedor !== null && pr.precioAlmacen !== null) {
+        var total = pr.precioSugerido;
+        var pProd = Math.max(0, Math.round(pr.costoProveedor / total * 100));
+        var pLog = Math.max(0, Math.round((pr.costoLogistico || 0) / total * 100));
+        var pDist = Math.max(0, Math.round((k.gananciaDistribuidora || 0) / total * 100));
+        var pAlm = Math.max(0, 100 - pProd - pLog - pDist);
+        fairBar = '<div style="margin:10px 0 4px"><div class="row between small"><span class="muted">Distribución del valor</span><b style="color:var(--brand)">' + pProd + '% productor</b></div>' +
+          '<div class="fair-bar" title="Productor ' + pProd + '% · Logística ' + pLog + '% · Distribuidora ' + pDist + '% · Almacén ' + pAlm + '%">' +
+          '<i class="fb-prod" style="flex:' + pProd + '"></i><i class="fb-log" style="flex:' + pLog + '"></i><i class="fb-dist" style="flex:' + pDist + '"></i><i class="fb-alm" style="flex:' + pAlm + '"></i></div></div>';
+      }
       var calc = '<details><summary class="small">Cómo se calcula</summary><ul class="small">' +
         '<li>Costo total = costo al proveedor + costo logístico = ' + (k.costoTotal === null ? 'Sin datos (falta ' + (pr.costoProveedor === null ? 'el costo al proveedor' : 'el costo logístico') + ')' : gs(pr.costoProveedor) + ' + ' + gs(pr.costoLogistico) + ' = ' + gs(k.costoTotal)) + '</li>' +
-        '<li>Margen de la distribuidora (sobre el precio de venta) = (precio al almacén − costo total) ÷ precio al almacén = ' + (k.margenDistribuidora === null ? 'Sin datos' : gs(k.gananciaDistribuidora) + ' ÷ ' + gs(pr.precioAlmacen) + ' = ' + pct(k.margenDistribuidora)) + '</li>' +
-        '<li>Recargo de la distribuidora (sobre el costo) = (precio al almacén − costo total) ÷ costo total = ' + (k.recargoDistribuidora === null ? 'Sin datos' : gs(k.gananciaDistribuidora) + ' ÷ ' + gs(k.costoTotal) + ' = ' + pct(k.recargoDistribuidora)) + '</li>' +
-        '<li>Margen del almacén = (precio sugerido − precio al almacén) ÷ precio sugerido = ' + (k.margenAlmacen === null ? 'Sin datos' : gs(k.gananciaAlmacen) + ' ÷ ' + gs(pr.precioSugerido) + ' = ' + pct(k.margenAlmacen)) + '</li>' +
-        '<li>Recargo del almacén = (precio sugerido − precio al almacén) ÷ precio al almacén = ' + pct(k.recargoAlmacen) + '</li>' +
-        '<li>Parte del productor en el precio final = costo al proveedor ÷ precio sugerido = ' + pct(k.participacionProductor) + '</li></ul></details>';
-      return '<article class="card"><div class="row between"><h2>' + esc(p.name) + ' <small class="muted">' + esc(p.sku) + ' · por ' + esc(unit) + '</small></h2>' +
-        (p.status === 'potencial' ? badge('Línea potencial') : pr.precioAlmacen === null ? badge('Sin precio: no se vende', 'warn') : badge('En la tienda', 'ok')) + '</div>' +
-        '<dl class="kv kv-num" style="margin:8px 0"><dt>Costo pagado al proveedor</dt><dd class="num">' + v(pr.costoProveedor) + '</dd>' +
-        '<dt>Costo logístico por unidad</dt><dd class="num">' + v(pr.costoLogistico) + '</dd>' +
-        '<dt>Precio al almacén</dt><dd class="num"><b>' + v(pr.precioAlmacen) + '</b></dd>' +
+        '<li>Margen de la distribuidora (sobre el precio de venta) = ' + (k.margenDistribuidora === null ? 'Sin datos' : gs(k.gananciaDistribuidora) + ' ÷ ' + gs(pr.precioAlmacen) + ' = ' + pct(k.margenDistribuidora)) + '</li>' +
+        '<li>Recargo de la distribuidora (sobre el costo) = ' + (k.recargoDistribuidora === null ? 'Sin datos' : gs(k.gananciaDistribuidora) + ' ÷ ' + gs(k.costoTotal) + ' = ' + pct(k.recargoDistribuidora)) + '</li>' +
+        '<li>Margen del almacén = ' + (k.margenAlmacen === null ? 'Sin datos' : gs(k.gananciaAlmacen) + ' ÷ ' + gs(pr.precioSugerido) + ' = ' + pct(k.margenAlmacen)) + '</li>' +
+        '<li>Parte del productor en el precio final = ' + pct(k.participacionProductor) + '</li></ul></details>';
+      return '<article class="card"><div class="row between"><div class="row"><img class="pthumb" src="' + esc(p.photo || 'assets/logo-yvy.jpg') + '" alt=""><div><h3>' + esc(p.name) + '</h3><small class="muted">' + esc(p.sku) + ' · por ' + esc(unit) + '</small></div></div>' +
+        (p.status === 'potencial' ? badge('Línea potencial') : pr.precioAlmacen === null ? badge('Sin precio', 'warn') : badge('En la tienda', 'ok')) + '</div>' + fairBar +
+        '<dl class="kv kv-num" style="margin:8px 0"><dt>Costo al proveedor</dt><dd class="num">' + v(pr.costoProveedor) + '</dd>' +
+        '<dt>Costo logístico</dt><dd class="num">' + v(pr.costoLogistico) + '</dd>' +
+        '<dt>Precio al almacén</dt><dd class="num"><b style="color:var(--brand)">' + v(pr.precioAlmacen) + '</b></dd>' +
         '<dt>Precio final sugerido</dt><dd class="num">' + v(pr.precioSugerido) + '</dd>' +
-        '<dt>Margen distribuidora (sobre venta)</dt><dd class="num">' + pct(k.margenDistribuidora) + '</dd>' +
-        '<dt>Recargo distribuidora (sobre costo)</dt><dd class="num">' + pct(k.recargoDistribuidora) + '</dd>' +
-        '<dt>Margen del almacén (sobre venta)</dt><dd class="num">' + pct(k.margenAlmacen) + '</dd>' +
-        '<dt>Parte del productor en el precio final</dt><dd class="num">' + pct(k.participacionProductor) + '</dd></dl>' + calc +
-        '<div class="actions" style="margin-top:8px"><button class="btn sm" type="button" data-act="editar-precio" data-id="' + p.sku + '">Editar precios…</button></div></article>';
+        '<dt>Margen distribuidora</dt><dd class="num">' + pct(k.margenDistribuidora) + '</dd>' +
+        '<dt>Margen del almacén</dt><dd class="num">' + pct(k.margenAlmacen) + '</dd></dl>' + calc +
+        '<div class="actions" style="margin-top:10px"><button class="btn sm soft" type="button" data-act="editar-precio" data-id="' + p.sku + '">Editar precios…</button></div></article>';
     }).join('');
-    return head('Precios', 'Cuatro valores separados por producto. Margen (sobre el precio de venta) y recargo (sobre el costo) no son lo mismo. Si falta un dato, se muestra “Sin datos”, nunca cero.') +
-      '<div class="stack"><p class="note warn">Plazos de crédito, límites, fletes, pagos a las cooperativas y condiciones comerciales son decisiones abiertas: todavía no son reglas del sistema. Cambiar un precio no modifica pedidos ya confirmados.</p>' +
-      '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))">' + cards + '</div></div>';
+    return head('Precios y Comercio Justo', 'Cuatro valores separados por producto. Margen (sobre el precio de venta) y recargo (sobre el costo) no son lo mismo. Cambiar un precio no modifica pedidos ya confirmados.') +
+      '<div class="stack">' + kpis +
+      '<p class="note warn">Plazos de crédito, límites, fletes, pagos a las cooperativas y comparativa web automática de supermercados están en definición. Hoy se calcula todo sobre los precios cargados en el sistema.</p>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(315px,100%),1fr))">' + cards + '</div></div>';
   }
 
   function pageCatalogo() {
-    var rows = state.products.map(function (p) {
+    var q = (ui.catQ || '').trim().toLowerCase();
+    var cf = ui.catFilter || '';
+    var activos = state.products.filter(function (p) { return p.status === 'activo'; }).length;
+    var pot = state.products.filter(function (p) { return p.status === 'potencial'; }).length;
+    var sinDoc = state.products.filter(function (p) { return p.docRequired && !p.docRef; }).length;
+    var kpis = '<div class="mkpis">' +
+      mkpi('leaf', 'Total catálogo', D.fmtInt(state.products.length), '', activos + ' activos · ' + pot + ' líneas potenciales.') +
+      mkpi('users', 'Cooperativas activas', D.fmtInt(orgs('cooperativa').filter(function (o) { return o.active !== false; }).length), '', 'Bases productoras vinculadas.') +
+      mkpi('alert', 'Alerta documental', D.fmtInt(sinDoc), '', 'Productos que requieren documento pendiente.', sinDoc ? 'warn' : 'ok') + '</div>';
+    var filtered = state.products.filter(function (p) {
+      var cat = D.byId(state.categories, p.categoryId);
+      var hay = (p.name + ' ' + p.sku + ' ' + (cat ? cat.name : '') + ' ' + (p.origin || '')).toLowerCase();
+      return (!q || hay.indexOf(q) !== -1) && (!cf || p.categoryId === cf);
+    });
+    var chips = '<div class="chips"><button class="chip" type="button" data-act="cat-filter" data-id="" aria-pressed="' + (!cf) + '">Todos <span class="cnt">' + state.products.length + '</span></button>' +
+      state.categories.map(function (c) {
+        var n = state.products.filter(function (p) { return p.categoryId === c.id; }).length;
+        return n ? '<button class="chip" type="button" data-act="cat-filter" data-id="' + c.id + '" aria-pressed="' + (cf === c.id) + '">' + esc(c.name) + ' <span class="cnt">' + n + '</span></button>' : '';
+      }).join('') + '</div>';
+    var bar = '<div class="shopbar" style="margin-bottom:0"><label class="search"><span class="sr-only">Buscar catálogo</span>' + icon('search') +
+      '<input type="search" id="cat-search" value="' + esc(ui.catQ || '') + '" placeholder="Buscar producto, SKU, cooperativa o categoría…" autocomplete="off"></label></div>';
+    var rows = filtered.map(function (p) {
       var cat = D.byId(state.categories, p.categoryId);
       var why = D.notSellableReason(state, p);
-      return ['<b>' + esc(p.name) + '</b><br><small class="muted">' + esc(p.sku) + '</small>', esc(p.coopId ? orgName(p.coopId) : 'Origen por definir') + (p.origin ? '<br><small>' + esc(p.origin) + '</small>' : ''),
-        esc(cat.name), esc(p.presentation), 'Stock: ' + esc(D.UNITS[p.stockUnit].many) + '<br>Venta: ' + esc(D.unitLabel(p.saleUnit, 1)) + (p.saleFactor > 1 ? ' = ' + esc(qty(p.saleFactor, p.stockUnit)) : '') +
+      return ['<span class="ucell"><img class="pthumb" src="' + esc(p.photo || 'assets/logo-yvy.jpg') + '" alt=""><span><b>' + esc(p.name) + '</b><br><small class="muted">' + esc(p.sku) + '</small></span></span>',
+        esc(p.coopId ? orgName(p.coopId) : 'Origen por definir') + (p.origin ? '<br><small class="muted">' + esc(p.origin) + '</small>' : ''),
+        badge(cat.name, 'ok'), esc(p.presentation), 'Stock: ' + esc(D.UNITS[p.stockUnit].many) + '<br>Venta: ' + esc(D.unitLabel(p.saleUnit, 1)) + (p.saleFactor > 1 ? ' = ' + esc(qty(p.saleFactor, p.stockUnit)) : '') +
         (p.conversions && p.conversions.length ? '<br><small class="muted">' + p.conversions.map(function (c) { return '1 ' + esc(D.unitLabel(c.unit, 1)) + ' = ' + esc(qty(c.factor, p.stockUnit)); }).join('; ') + '</small>' : ''),
-        p.docRequired ? (p.docRef ? esc(p.docRef) : badge('Falta documento', 'bad')) : '<span class="muted">No exigido (por validar)</span>',
+        p.docRequired ? (p.docRef ? esc(p.docRef) : badge('Falta documento', 'bad')) : '<span class="muted">Por validar</span>',
         badge(D.PRODUCT_STATUS[p.status], p.status === 'activo' ? 'ok' : '') + (p.status === 'activo' && why ? '<br><small class="muted">' + esc(why) + '</small>' : ''),
-        '<button class="btn sm" type="button" data-act="editar-producto" data-id="' + p.sku + '">Editar</button>'];
+        '<button class="btn sm soft" type="button" data-act="editar-producto" data-id="' + p.sku + '">Editar</button>'];
     });
-    return head('Catálogo', 'Productos, unidades y conversiones. Las líneas potenciales no se venden ni se reciben hasta activarlas. Fotos: solo cuando las cooperativas las provean (carga no incluida en este prototipo).',
-      '<button class="btn primary" type="button" data-act="editar-producto" data-id="">Nuevo producto…</button>') +
-      table(['Producto', 'Cooperativa / origen', 'Categoría', 'Presentación', 'Unidades', 'Documento', 'Estado', ''], rows, 'Sin productos.');
+    return head('Catálogo de Productos', 'Productos, unidades, conversiones y documentación. Las líneas potenciales no se venden ni se reciben hasta activarlas.',
+      '<button class="btn primary" type="button" data-act="editar-producto" data-id="">+ Nuevo producto…</button>') +
+      '<div class="stack">' + kpis + bar + chips +
+      table(['Producto', 'Cooperativa / origen', 'Categoría', 'Presentación', 'Unidades', 'Documento', 'Estado', ''], rows, 'Sin productos para este filtro.') + '</div>';
   }
 
   function pageMovimientos() {
@@ -1341,10 +1684,12 @@
     var setup = !accessReady();
     var admin = state.users.filter(function (u) { return u.role === 'admin' && u.active !== false; })[0];
     var shop = D.storefront(state, today()).filter(function (p) { return p.photo; }).slice(0, 6);
-    var art = '<div class="auth-art" aria-hidden="true"><div class="auth-art-in"><p class="eyebrow">' + esc(storeName()) + '</p><h2>Pedidos, stock y tienda de las cooperativas, en un solo lugar.</h2>' +
-      '<div class="auth-tiles">' + shop.map(function (p) { return '<span><img src="' + esc(p.photo) + '" alt=""></span>'; }).join('') + '</div></div></div>';
+    var art = '<div class="auth-art" aria-hidden="true"><div class="auth-art-in"><p class="eyebrow">Red Agroecológica del Paraguay · Comercio Justo</p>' +
+      '<h2>Pedidos, stock y tienda de las cooperativas, en un solo lugar.</h2>' +
+      '<p class="sub">Conectamos directamente a cooperativas productoras con almacenes de barrio, con trazabilidad por lote FEFO y precios transparentes.</p>' +
+      '<div class="auth-tiles">' + shop.map(function (p) { return '<span><img src="' + esc(p.photo) + '" alt=""><small>' + esc(p.name) + '</small></span>'; }).join('') + '</div></div></div>';
     var form = setup
-      ? '<h1>Configurá el acceso</h1><p class="muted">Es el primer ingreso. Creá la cuenta de Administración: con ella se dan de alta las demás cuentas y sus niveles de acceso.</p>' +
+      ? '<span class="badge ok" style="align-self:flex-start">' + icon('sprout') + 'Primer ingreso</span><h1>Configurá el acceso</h1><p class="muted">Creá la cuenta de Administración: con ella se dan de alta las demás cuentas y sus niveles de acceso.</p>' +
         '<form class="form auth-form" data-form="setup" novalidate>' +
         field('Nombre', input('name', 'text', admin ? admin.name : 'Administración', 'required autocomplete="name"'), '', 'wide') +
         field('Usuario', input('username', 'text', admin ? admin.username : 'admin', 'required autocomplete="username" autocapitalize="none" spellcheck="false"'), 'Letras sin acento, números, punto o guion.', 'wide') +
@@ -1352,14 +1697,14 @@
         field('Repetir contraseña', input('p2', 'password', '', 'required autocomplete="new-password" minlength="8"'), '', 'wide') +
         (server.setupCode ? field('Código de configuración', input('codigo', 'password', '', 'required autocomplete="off"'), 'Lo definió quien publicó el sistema (variable CODIGO_CONFIGURACION en Vercel).', 'wide') : '') +
         '<div class="form-error" role="alert"></div><button class="btn primary lg wide" type="submit">Crear acceso y entrar</button></form>'
-      : '<h1>Ingresar</h1><p class="muted">Usá el usuario y la contraseña que te dio Yvy Guaraní.</p>' +
+      : '<span class="badge ok" style="align-self:flex-start">' + icon('sprout') + 'Red Agroecológica · Paraguay</span><h1>Ingresar</h1><p class="muted">Usá el usuario y la contraseña que te dio Yvy Guaraní.</p>' +
         '<form class="form auth-form" data-form="login" novalidate>' +
         field('Usuario', input('username', 'text', '', 'required autocomplete="username" autocapitalize="none" spellcheck="false" autofocus'), '', 'wide') +
         field('Contraseña', input('password', 'password', '', 'required autocomplete="current-password"'), '', 'wide') +
-        '<div class="form-error" role="alert"></div><button class="btn primary lg wide" type="submit">Ingresar</button></form>' +
-        '<p class="small muted">¿Olvidaste tu contraseña? Pedí a Administración que la restablezca.</p>' +
+        '<div class="form-error" role="alert"></div><button class="btn primary lg wide" type="submit">Ingresar al sistema →</button></form>' +
+        '<p class="note small">¿Olvidaste tu contraseña? Pedí a Administración que la restablezca.</p>' +
         '<p><a class="more" href="#/tienda">← Ver la tienda sin ingresar</a></p>';
-    return '<div class="auth"><div class="auth-card"><a class="auth-brand" href="#/inicio"><img src="assets/logo-yvy.jpg" alt="" width="48" height="48"><span><b>' + esc(storeName()) + '</b><small>Yvy Guaraní S.A.</small></span></a>' +
+    return '<div class="auth"><div class="auth-card"><a class="auth-brand" href="#/inicio"><img src="assets/logo-yvy-oficial.png" alt="Yvy Guaraní S.A."></a>' +
       form + '</div>' + art + '</div>';
   }
 
@@ -1453,6 +1798,13 @@
       field('Costo de entrega por pedido (Gs.)', input('deliveryFee', 'number', s.deliveryFee, 'min="0" step="1" inputmode="numeric"'), 'Vacío = a definir. Se registra en cada pedido al confirmar.') +
       field('Avisar vencimientos con (días)', input('nearExpiryDays', 'number', s.nearExpiryDays, 'min="1" max="365" step="1" inputmode="numeric"')) +
       '<div class="form-error" role="alert"></div><div class="actions wide"><button class="btn primary" type="submit">Guardar</button></div></form></section></div>' +
+      '<section class="card"><div class="row between"><div><h2>Cobro SIPAP / Transferencia y Canal WhatsApp</h2><p class="small muted">Estos datos aparecen en la instrucción de pago del cliente y en la Central de WhatsApp.</p></div>' + badge('Verificación manual activa', 'ok') + '</div>' +
+      '<form class="form" data-form="sipap-config" style="margin-top:12px" novalidate>' +
+      field('Titular de la cuenta', input('sipapHolder', 'text', s.sipapHolder || 'Yvy Guaraní S.A.', 'maxlength="120"')) +
+      field('Alias SIPAP / RUC / Nº Cuenta', input('sipapAlias', 'text', s.sipapAlias || '', 'placeholder="Ej. 80094120-4 o alias@yvy" maxlength="120"')) +
+      field('Banco o entidad', input('sipapBank', 'text', s.sipapBank || '', 'placeholder="Ej. Banco Itaú / Ueno / BNF" maxlength="120"')) +
+      field('WhatsApp de atención (referencia)', input('whatsappPhone', 'text', s.whatsappPhone || '', 'placeholder="+595 981 000 000" maxlength="120"')) +
+      '<div class="form-error" role="alert"></div><div class="actions wide"><button class="btn primary" type="submit">Guardar datos de cobro</button></div></form></section>' +
       '<section><div class="row between" style="margin-bottom:10px"><h2>Cooperativas y proveedores</h2><button class="btn sm" type="button" data-act="editar-cooperativa" data-id="">Nueva cooperativa…</button></div>' + coops + '</section>' +
       '<section><h2 style="margin-bottom:8px">Categorías y requisitos</h2><p class="note warn" style="margin-bottom:10px">Los requisitos legales y de calidad de cada categoría están <b>por validar</b> con las cooperativas y la autoridad correspondiente.</p><div class="grid">' + cats + '</div></section>' +
       '<section class="card"><h2>Datos y respaldo</h2><p class="small muted" style="margin-bottom:10px">Los datos se guardan en el servidor, que hace una copia de seguridad automática al iniciar, cada 24 horas y antes de reemplazar datos. También podés descargar un respaldo en JSON (incluye las cuentas: guardalo en un lugar seguro).</p>' +
@@ -1532,12 +1884,241 @@
       '<div class="np-layout">' + picker + summary + '</div>' + mobileBar;
   }
 
+  // ---------- módulos nuevos Stitch: Tendencias, WhatsApp CRM y Central de Ayuda ----------
+
+  function pageTendencias() {
+    var t = today();
+    var range = periodRange();
+    var a = D.analytics(state, range.from, range.to, t);
+    var dash = D.dashboard(state, t);
+    var topProd = a.products[0] || null;
+    // Demanda por zona de almacenes reales
+    var byZone = {};
+    var totalZoneSales = 0;
+    state.orders.forEach(function (o) {
+      if (!o.confirmedAt || o.status === 'cancelado') return;
+      var org = D.byId(state.orgs, o.almacenId);
+      var z = (o.checkout && o.checkout.zone) || (org && org.zona) || 'Sin zona definida';
+      if (!byZone[z]) byZone[z] = { zone: z, ventas: 0, pedidos: 0, clients: {} };
+      byZone[z].ventas += (o.subtotal || 0);
+      byZone[z].pedidos++;
+      byZone[z].clients[o.almacenId] = true;
+      totalZoneSales += (o.subtotal || 0);
+    });
+    var zones = Object.keys(byZone).map(function (k) {
+      var z = byZone[k];
+      return { zone: z.zone, ventas: z.ventas, pedidos: z.pedidos, clientes: Object.keys(z.clients).length };
+    }).sort(function (x, y) { return y.ventas - x.ventas; });
+    var topZone = zones[0] || null;
+    var lowZone = zones.length > 1 ? zones[zones.length - 1] : null;
+    // Baja rotación / riesgo de vencimiento en depósito
+    var riskStock = a.stock.filter(function (x) {
+      return x.s.disponible > 0 && (x.coberturaDias === null || x.coberturaDias > 30);
+    }).slice(0, 5);
+    var nearRisk = dash.nearExpiry.slice(0, 5);
+
+    var kpis = '<div class="mkpis">' +
+      mkpi('trend', 'Producto estrella', topProd ? esc(topProd.name) : 'Sin ventas', topProd ? gs(topProd.ventas) : '', topProd ? plural(topProd.pedidos, 'pedido', 'pedidos') + ' en el período.' : 'Se calcula al confirmar pedidos.', 'ok') +
+      mkpi('map', 'Zona líder', topZone ? esc(topZone.zone) : 'Sin datos', topZone ? gs(topZone.ventas) : '', topZone ? plural(topZone.pedidos, 'pedido', 'pedidos') + ' · ' + plural(topZone.clientes, 'almacén', 'almacenes') : 'Según zonas de clientes.') +
+      mkpi('alert', 'Lotes por vencer / rescate', D.fmtInt(nearRisk.length), '', 'Lotes dentro de ' + state.settings.nearExpiryDays + ' días de vencimiento.', nearRisk.length ? 'warn' : 'ok') +
+      mkpi('box', 'Baja rotación en depósito', D.fmtInt(riskStock.length), '', 'Productos con stock disponible y cobertura > 30 días.', riskStock.length ? 'warn' : '') + '</div>';
+
+    var topRank = a.products.length ? '<ol class="trend-rank">' + a.products.slice(0, 5).map(function (r, i) {
+      var pr = D.productOf(state, r.sku);
+      return '<li><span class="pos">#' + (i + 1) + '</span><img class="pthumb" src="' + esc((pr && pr.photo) || 'assets/logo-yvy.jpg') + '" alt="">' +
+        '<div style="flex:1;min-width:0"><b>' + esc(r.name) + '</b><br><small class="muted">' + esc(qty(r.qty, r.unit)) + ' · ' + plural(r.pedidos, 'pedido', 'pedidos') + '</small></div>' +
+        '<div style="text-align:right"><b class="num" style="color:var(--brand)">' + gs(r.ventas) + '</b><br>' + badge('Alta rotación', 'ok') + '</div></li>';
+    }).join('') + '</ol>' : '<p class="empty">Aún no hay ventas confirmadas en este período. Cargá la demostración en Configuración para ver el análisis completo.</p>';
+
+    var rescueHtml = (nearRisk.length || riskStock.length) ? '<ol class="trend-rank">' +
+      nearRisk.map(function (x) {
+        var p = D.productOf(state, x.lot.sku);
+        return '<li><span class="pos warn">!</span><img class="pthumb" src="' + esc((p && p.photo) || 'assets/logo-yvy.jpg') + '" alt="">' +
+          '<div style="flex:1;min-width:0"><b>' + esc(p.name) + ' · Lote ' + esc(x.lot.code) + '</b><br><small class="muted">' + esc(qty(x.lot.liberado, p.stockUnit)) + ' liberados · vence ' + fdate(x.lot.expiry) + '</small></div>' +
+          '<a class="btn sm soft" href="#/precios">Ajustar precio</a></li>';
+      }).join('') +
+      riskStock.slice(0, 3).map(function (x) {
+        return '<li><span class="pos warn">↘</span><img class="pthumb" src="' + esc(x.product.photo || 'assets/logo-yvy.jpg') + '" alt="">' +
+          '<div style="flex:1;min-width:0"><b>' + esc(x.product.name) + '</b><br><small class="muted">' + x.s.disponible + ' disponibles · ' + (x.coberturaDias === null ? 'sin salidas en 30 días' : x.coberturaDias + ' días de cobertura') + '</small></div>' +
+          '<a class="btn sm" href="#/whatsapp">Impulsar</a></li>';
+      }).join('') + '</ol>' : '<p class="note">Excelente rotación: no hay lotes próximos a vencer ni productos estancados.</p>';
+
+    var zoneBars = zones.length ? hbars(zones, function (z) { return z.ventas; }, function (z) { return gs(z.ventas); },
+      function (z) { return esc(z.zone); },
+      function (z) { return plural(z.pedidos, 'pedido', 'pedidos') + ' · ' + plural(z.clientes, 'almacén', 'almacenes') + (totalZoneSales ? ' · ' + pct(z.ventas / totalZoneSales) + ' del volumen' : ''); },
+      'Sin datos geográficos todavía.') : '<p class="muted small">Sin pedidos confirmados por zona todavía.</p>';
+
+    var campaigns = '<div class="stack">' +
+      '<article class="campaign-card"><div class="row between">' + badge('Cross-selling sugerido', 'ok') + '<small class="muted">Basado en ventas reales</small></div>' +
+      '<h3>Combo de Alta Rotación</h3><p class="small muted">' + (topProd ? 'Combinar <b>' + esc(topProd.name) + '</b> con un producto de baja rotación para elevar el ticket promedio en ' + esc(topZone ? topZone.zone : 'tu zona principal') + '.' : 'Cuando tengas ventas registradas, sugeriremos combos automáticamente.') + '</p>' +
+      '<div class="actions"><a class="btn sm primary" href="#/whatsapp">' + icon('whatsapp') + 'Preparar mensaje en Central WhatsApp</a></div></article>' +
+      '<article class="campaign-card amber"><div class="row between">' + badge('Rescate de stock FEFO', 'warn') + '<small class="muted">Prioridad merma cero</small></div>' +
+      '<h3>Liquidación preventiva de lotes próximos</h3><p class="small muted">' + (nearRisk.length ? 'Hay <b>' + plural(nearRisk.length, 'lote', 'lotes') + '</b> dentro de la ventana de alerta de ' + state.settings.nearExpiryDays + ' días. Bonificar el precio al almacén evita pérdidas.' : 'No hay lotes en riesgo inminente de vencimiento.') + '</p>' +
+      '<div class="actions"><a class="btn sm" href="#/stock">Revisar lotes FEFO</a><a class="btn sm" href="#/precios">Ver precios</a></div></article>' +
+      (lowZone ? '<article class="campaign-card"><div class="row between">' + badge('Zona con oportunidad', 'info') + '<small class="muted">Expansión regional</small></div>' +
+      '<h3>Ronda comercial en ' + esc(lowZone.zone) + '</h3><p class="small muted">Solo registra ' + plural(lowZone.pedidos, 'pedido', 'pedidos') + ' (' + gs(lowZone.ventas) + '). Coordinar una ruta de flete compartido puede acelerar la recompra.</p>' +
+      '<div class="actions"><a class="btn sm" href="#/clientes">Ver clientes</a></div></article>' : '') +
+      '<p class="note info small"><b>Automatización de envíos masivos / push en preparación:</b> hoy las alertas se calculan en vivo con datos reales del ERP y se ejecutan manualmente desde Precios o WhatsApp.</p></div>';
+
+    return head('Análisis de Tendencias, Demanda Regional & Marketing', 'Rotación real de productos, distribución geográfica de ventas y alertas de rescate FEFO calculadas a partir de los pedidos del período.',
+      '<a class="btn" href="#/panel">' + icon('chart') + 'Volver al panel</a>') +
+      '<div class="stack">' + kpis +
+      '<div class="cols-2"><div class="stack"><section class="card"><div class="card-head"><div><h2>Ranking de velocidad de salida</h2><p class="small muted">Productos con mayor rotación en el período seleccionado</p></div></div>' + topRank + '</section>' +
+      '<section class="card"><div class="card-head"><div><h2>Baja rotación y rescate FEFO</h2><p class="small muted">Lotes próximos a vencer o stock con baja salida</p></div></div>' + rescueHtml + '</section>' +
+      '<section class="card"><div class="card-head"><div><h2>Distribución geográfica de la demanda</h2><p class="small muted">Volumen confirmado agrupado por zona de entrega</p></div></div>' + zoneBars + '</section></div>' +
+      '<section class="card"><div class="card-head"><div><h2>Acciones y campañas sugeridas</h2><p class="small muted">Recomendaciones accionables sobre tus datos reales</p></div></div>' + campaigns + '</section></div></div>';
+  }
+
+  function pageWhatsapp() {
+    var almacenes = orgs('almacen').filter(function (o) { return o.active !== false; });
+    var coops = orgs('cooperativa').filter(function (o) { return o.active !== false; });
+    var contacts = almacenes.map(function (o) {
+      var ords = state.orders.filter(function (x) { return x.almacenId === o.id; }).sort(function (a, b) { return a.id < b.id ? 1 : -1; });
+      return { id: o.id, name: o.name, kind: 'Cliente', zona: o.zona || 'Sin zona', phone: o.contacto || 'Sin teléfono cargado', orders: ords, lastOrder: ords[0] || null };
+    }).concat(coops.slice(0, 4).map(function (o) {
+      return { id: o.id, name: o.name, kind: 'Cooperativa', zona: o.zona || 'Origen cooperativa', phone: o.contacto || 'Sin teléfono cargado', orders: [], lastOrder: null };
+    }));
+    if (!contacts.length) {
+      return head('Central de WhatsApp & Atención', 'Hub unificado para atención a clientes y cooperativas.') +
+        '<p class="note warn"><b>Integración WhatsApp / Evolution API en preparación.</b> Todavía no hay clientes ni cooperativas cargados. Creá un cliente en <a href="#/clientes">Clientes</a> para iniciar conversaciones.</p>';
+    }
+    var active = contacts.filter(function (c) { return c.id === ui.waThread; })[0] || contacts[0];
+    ui.waThread = active.id;
+    var localMsgs = (ui.waMsgs && ui.waMsgs[active.id]) || [];
+    var defaultMsgs = active.kind === 'Cliente'
+      ? [{ dir: 'in', at: 'Referencia de demostración', text: '¡Hola Yvy Guaraní! Quisiera consultar disponibilidad de productos para reponer esta semana en ' + active.name + '.' },
+         { dir: 'out', at: 'Plantilla sugerida', text: '¡Mba\'éichapa ' + active.name + '! Ya tenemos el stock actualizado en la tienda. ¿Querés que te armemos el borrador del pedido?' }]
+      : [{ dir: 'in', at: 'Referencia de demostración', text: 'Buen día, avisamos que tenemos nueva producción lista para coordinar recepción en depósito.' }];
+    var msgs = defaultMsgs.concat(localMsgs);
+
+    var kpis = '<div class="mkpis">' +
+      mkpi('whatsapp', 'Estado de conexión', 'En preparación', '', 'Interfaz CRM lista; webhook Evolution API / n8n pendiente de enlace.', 'warn') +
+      mkpi('users', 'Contactos sincronizados', D.fmtInt(contacts.length), '', almacenes.length + ' almacenes · ' + coops.length + ' cooperativas del ERP.') +
+      mkpi('list', 'Pedidos del contacto', D.fmtInt(active.orders.length), '', 'Historial real vinculado a ' + esc(active.name) + '.') +
+      mkpi('qr', 'Línea oficial configurada', esc(state.settings.whatsappPhone || 'Sin definir'), '', 'Editable en Configuración → Datos de cobro y WhatsApp.') + '</div>';
+
+    var threadList = '<aside class="card" style="padding:14px"><h3 style="margin-bottom:10px">Conversaciones (' + contacts.length + ')</h3><div class="wa-list">' +
+      contacts.map(function (c) {
+        var on = c.id === active.id;
+        return '<button type="button" class="wa-thread' + (on ? ' on' : '') + '" data-act="wa-select" data-id="' + esc(c.id) + '">' +
+          '<div class="wa-thread-top"><b>' + esc(c.name) + '</b>' + badge(c.kind, c.kind === 'Cliente' ? 'ok' : 'info') + '</div>' +
+          '<small class="muted">' + esc(c.zona) + ' · ' + esc(c.phone) + '</small>' +
+          (c.lastOrder ? '<small style="color:var(--brand);font-weight:600">Último pedido: ' + esc(c.lastOrder.id) + ' (' + esc(D.ORDER_STATUS[c.lastOrder.status]) + ')</small>' : '') + '</button>';
+      }).join('') + '</div></aside>';
+
+    var chatPane = '<section class="card wa-chat">' +
+      '<div class="wa-chat-head"><div class="row"><span class="avatar">' + esc(initials(active.name)) + '</span>' +
+      '<div><b>' + esc(active.name) + '</b><br><small class="muted">' + esc(active.zona) + ' · ' + esc(active.phone) + '</small></div></div>' +
+      '<div class="actions">' + (active.kind === 'Cliente' && can('pedido.guardarBorrador') ? '<button class="btn sm primary" type="button" data-act="pedido-para" data-id="' + esc(active.id) + '">' + icon('cart') + 'Armar pedido</button>' : '') +
+      badge('Modo borrador local', 'warn') + '</div></div>' +
+      '<div class="wa-msgs">' + msgs.map(function (m) {
+        return '<div class="wa-msg ' + m.dir + '"><span>' + esc(m.text) + '</span><small>' + esc(m.at) + '</small></div>';
+      }).join('') + '</div>' +
+      '<form class="wa-compose" data-form="wa-send"><input type="hidden" name="orgId" value="' + esc(active.id) + '">' +
+      '<div class="chips">' +
+      '<button type="button" class="chip" data-act="wa-quick" data-text="Hola, ya reservamos tu pedido y te pasamos el código QR SIPAP para abonar.">Enviar aviso SIPAP</button>' +
+      '<button type="button" class="chip" data-act="wa-quick" data-text="Tu pedido ya está en camino en el reparto de hoy.">Avisar despacho</button>' +
+      '<button type="button" class="chip" data-act="wa-quick" data-text="¡Tenemos cosecha nueva disponible en la tienda! ¿Te armamos el pedido semanal?">Oferta semanal</button></div>' +
+      '<div class="wa-compose-row"><input type="text" name="text" id="wa-input" placeholder="Escribí una nota o respuesta borrador para ' + esc(active.name) + '…" autocomplete="off" required>' +
+      '<button class="btn primary" type="submit">Registrar</button></div>' +
+      '<small class="muted">Los mensajes escritos aquí quedan solo como borrador local de prueba hasta conectar WhatsApp / Evolution API.</small></form></section>';
+
+    var totalSpent = active.orders.filter(function (o) { return o.confirmedAt && o.status !== 'cancelado'; }).reduce(function (s, o) { return s + (o.total || 0); }, 0);
+    var crmSidebar = '<aside class="stack"><section class="card"><h3>Ficha ERP del contacto</h3>' +
+      '<dl class="kv" style="margin-top:8px"><dt>Tipo</dt><dd>' + esc(active.kind) + '</dd><dt>Zona</dt><dd>' + esc(active.zona) + '</dd><dt>Contacto</dt><dd>' + esc(active.phone) + '</dd>' +
+      (active.kind === 'Cliente' ? '<dt>Pedidos</dt><dd>' + active.orders.length + '</dd><dt>Total confirmado</dt><dd class="num"><b>' + gs(totalSpent) + '</b></dd>' : '') + '</dl>' +
+      (active.lastOrder ? '<div class="note small" style="margin-top:10px">Último pedido: <b>' + esc(active.lastOrder.id) + '</b> · ' + esc(D.ORDER_STATUS[active.lastOrder.status]) +
+        (active.lastOrder.payment ? '<br>Pago: ' + esc(D.PAYMENT_STATUS[active.lastOrder.payment.status] || '') : '') + '</div>' : '') +
+      '</section><section class="card card-soft"><h3>Integración WhatsApp</h3><p class="small muted">Esta central está lista para vincularse con tu instancia local de <b>n8n + Evolution API</b>. Cuando la conectes, los mensajes y avisos de pedido saldrán en tiempo real.</p></section></aside>';
+
+    return head('Central de WhatsApp & Atención CRM', 'Atención comercial a almacenes y coordinación con cooperativas conectada a las fichas reales del ERP.',
+      '<a class="btn" href="#/config">Configurar teléfono</a>') +
+      '<div class="stack"><p class="note warn"><b>Integración externa en preparación:</b> la vista muestra tus clientes y pedidos reales, pero el envío real por WhatsApp (Evolution API / n8n) todavía no está activado.</p>' +
+      kpis + '<div class="wa-grid">' + threadList + chatPane + crmSidebar + '</div></div>';
+  }
+
+  function pageAyuda() {
+    var mods = [
+      {
+        id: 'recepcion', title: 'Recepción y control FEFO', role: 'Depósito', time: '4 pasos',
+        desc: 'Cómo registrar ingresos de cooperativas, separar stock liberado vs. bloqueado y priorizar lotes por vencimiento.',
+        steps: [
+          ['Registrar recepción lote por lote', 'En Depósito → Recepción, cargá cooperativa, producto, código de lote, cantidad declarada y recibida.'],
+          ['Separar liberado y bloqueado', 'Solo la cantidad liberada queda disponible para venta. Si algo queda en observación, registrá el motivo del bloqueo.'],
+          ['Verificar orden FEFO en Stock', 'En Stock y FEFO el sistema marca automáticamente con “Sale primero” el lote vendible con vencimiento más cercano.'],
+          ['Sin stock automático por oferta', 'Las ofertas informadas por las cooperativas sirven para planificar, pero recién son stock real cuando se registran en Recepción.']
+        ]
+      },
+      {
+        id: 'pedidos', title: 'Flujo de pedidos y reservas', role: 'Ventas / Depósito', time: '4 pasos',
+        desc: 'Del borrador a la entrega sin vender el mismo stock dos veces.',
+        steps: [
+          ['Armar borrador o recibir de la tienda', 'En Nuevo pedido (o desde la tienda del almacén) se eligen productos, cantidades y ventana de entrega.'],
+          ['Confirmar y reservar todo o nada', 'Al confirmar, los precios quedan fijos y el stock se reserva en los lotes FEFO. Si falta un producto, no se reserva parcialmente.'],
+          ['Preparar y despachar', 'Depósito marca En preparación y luego Despachar (indicando responsable). Recién al despachar sale el stock físico.'],
+          ['Entregar o cancelar antes del despacho', 'Antes de despachar se puede cancelar liberando la reserva una sola vez. Una vez despachado, se confirma la entrega.']
+        ]
+      },
+      {
+        id: 'sipap', title: 'Cobro QR SIPAP y verificación manual', role: 'Administración / Cliente', time: '3 pasos',
+        desc: 'Cómo funciona la instrucción de pago SIPAP/transferencia y la confirmación manual.',
+        steps: [
+          ['Configurar cuenta y alias', 'Administración carga el Titular, Alias SIPAP/RUC y Banco en Configuración → Cobro SIPAP.'],
+          ['El almacén elige forma de pago e informa comprobante', 'Al confirmar su pedido en Mi pedido, ve el QR de instrucción y puede cargar su número de referencia SIPAP.'],
+          ['Administración confirma la acreditación', 'En Gestión de Pedidos → filtro “Por verificar pago”, Administración revisa el extracto y pulsa “Confirmar pago”.']
+        ]
+      },
+      {
+        id: 'tienda', title: 'Guía para clientes (almacenes)', role: 'Cliente', time: '3 pasos',
+        desc: 'Cómo pedir mercadería, avisar interés y seguir tus entregas desde el celular.',
+        steps: [
+          ['Ingresar con tu cuenta', 'Pedí tu usuario a Yvy Guaraní para ver precios mayoristas y stock disponible real.'],
+          ['Cargar la canasta y confirmar', 'Agregá productos desde Tienda, elegí dirección y forma de pago en Mi pedido y confirmá para reservar tu stock.'],
+          ['Avisar interés para próximas cosechas', 'Si un producto no tiene stock o precio todavía, usá “Avisar interés” para que planifiquemos con la cooperativa.']
+        ]
+      }
+    ];
+    var faqs = [
+      ['¿Reservar un pedido descuenta el stock físico inmediatamente?', 'No. Al confirmar el pedido el stock pasa a estado “Reservado” (no se puede vender a otro cliente), pero el stock físico recién sale del depósito cuando se marca “Despachado”.'],
+      ['¿Qué pasa si cambio un precio después de que un cliente confirmó su pedido?', 'Nada en el pedido ya confirmado: los precios, costos y unidades quedan congelados en las líneas del pedido al momento de la confirmación.'],
+      ['¿Cómo restablezco la contraseña de un usuario?', 'Desde Administración → Usuarios y accesos, elegí la cuenta y pulsá “Nueva contraseña”. Al cambiarla se cierran las sesiones anteriores de esa cuenta.'],
+      ['¿Los pagos por QR SIPAP se acreditan solos?', 'Todavía no: la integración bancaria automática con BCP/SIPAP está en preparación. El QR sirve como instrucción y Administración confirma el pago manualmente.']
+    ];
+    var q = (ui.helpQ || '').trim().toLowerCase();
+    var activeMod = mods.filter(function (m) { return m.id === ui.helpMod; })[0] || mods[0];
+    var filteredFaqs = faqs.filter(function (f) { return !q || (f[0] + ' ' + f[1]).toLowerCase().indexOf(q) !== -1; });
+
+    return head('Central de Ayuda y Capacitación', 'Guías operativas paso a paso para operar la tienda, el depósito FEFO, los pedidos y los cobros SIPAP.') +
+      '<div class="stack">' +
+      '<div class="shopbar card" style="padding:14px 16px;margin-bottom:0"><label class="search"><span class="sr-only">Buscar en ayuda</span>' + icon('search') +
+      '<input type="search" id="help-search" value="' + esc(ui.helpQ || '') + '" placeholder="Buscá por tema (ej. FEFO, SIPAP, contraseña, stock, reserva)…" autocomplete="off"></label>' +
+      '<span class="badge ok">' + icon('book') + 'Manual operativo Yvy Guaraní</span></div>' +
+      '<div class="help-modules">' + mods.map(function (m) {
+        return '<button type="button" class="help-mod' + (m.id === activeMod.id ? ' on' : '') + '" data-act="help-mod" data-id="' + m.id + '">' +
+          '<div class="row between">' + badge(m.role, m.id === activeMod.id ? 'brand' : 'ok') + '<small class="muted">' + esc(m.time) + '</small></div>' +
+          '<b>' + esc(m.title) + '</b><small class="muted">' + esc(m.desc) + '</small></button>';
+      }).join('') + '</div>' +
+      '<div class="cols-2"><section class="card"><div class="card-head"><div><p class="eyebrow">Procedimiento operativo</p><h2>' + esc(activeMod.title) + '</h2><p class="small muted">' + esc(activeMod.desc) + '</p></div></div>' +
+      '<ol class="sop-list">' + activeMod.steps.map(function (st) {
+        return '<li><div><b>' + esc(st[0]) + '</b><small>' + esc(st[1]) + '</small></div></li>';
+      }).join('') + '</ol></section>' +
+      '<div class="stack"><section class="card"><h2>Preguntas frecuentes</h2><div style="margin-top:10px">' +
+      (filteredFaqs.length ? filteredFaqs.map(function (f) {
+        return '<details class="faq-item"><summary>' + esc(f[0]) + '</summary><p>' + esc(f[1]) + '</p></details>';
+      }).join('') : '<p class="muted small">Ninguna pregunta coincide con esa búsqueda.</p>') + '</div></section>' +
+      '<section class="card card-soft"><h3>Soporte y acompañamiento</h3><p class="small muted" style="margin:6px 0 12px">¿Tenés una consulta operativa o necesitás alta de cuentas? Contactá al equipo de Administración de Yvy Guaraní.</p>' +
+      '<div class="actions">' + (state.settings.whatsappPhone ? '<span class="badge ok">' + icon('whatsapp') + esc(state.settings.whatsappPhone) + '</span>' : '') +
+      (can('pedido.guardarBorrador') && !isBuyer() ? '<a class="btn sm primary" href="#/whatsapp">Ir a Central WhatsApp</a>' : '<a class="btn sm primary" href="#/tienda">Volver a la tienda</a>') + '</div></section></div></div></div>';
+  }
+
   var PAGES = {
     'ingresar': pageIngresar, 'cuenta': pageCuenta,
-    'inicio': pageInicio, 'producto': pageProducto, 'tienda': pageTienda, 'mi-pedido': pageMiPedido, 'mis-pedidos': pageMisPedidos, 'mi-interes': pageMiInteres,
+    'inicio': pageInicio, 'producto': pageProducto, 'tienda': pageTienda, 'mi-pedido': pageMiPedido, 'pago': pagePago, 'pedido-confirmado': pagePedidoConfirmado,
+    'mis-pedidos': pageMisPedidos, 'mi-interes': pageMiInteres,
     'mi-oferta': pageMiOferta, 'lo-recibido': pageLoRecibido, 'mis-productos': pageMisProductos,
     'panel': pagePanel, 'recepcion': pageRecepcion, 'stock': pageStock, 'pedidos': pagePedidos, 'nuevo-pedido': pageNuevoPedido, 'cruce': pageCruce,
     'clientes': pageClientes, 'precios': pagePrecios, 'catalogo': pageCatalogo, 'movimientos': pageMovimientos,
+    'tendencias': pageTendencias, 'whatsapp': pageWhatsapp, 'ayuda': pageAyuda,
     'usuarios': pageUsuarios, 'auditoria': pageAuditoria, 'config': pageConfig
   };
 
@@ -1614,6 +2195,37 @@
     },
     config: function (f) {
       return run('config.actualizar', { deliveryFee: num(f.deliveryFee), nearExpiryDays: num(f.nearExpiryDays) });
+    },
+    'sipap-config': function (f) {
+      return run('config.actualizar', { sipapHolder: f.sipapHolder, sipapAlias: f.sipapAlias, sipapBank: f.sipapBank, whatsappPhone: f.whatsappPhone });
+    },
+    'informar-pago': function (f) {
+      return run('pedido.informarPago', { orderId: f.orderId, method: f.method, ref: f.ref }).then(function (r) {
+        if (r.ok) location.hash = '#/pedido-confirmado/' + encodeURIComponent(f.orderId);
+        return r;
+      });
+    },
+    'quick-jump': function (f) {
+      var q = (f.q || '').trim().toLowerCase();
+      if (!q) return { ok: true };
+      var ord = state.orders.filter(function (o) { return o.id.toLowerCase() === q || o.id.toLowerCase().indexOf(q) !== -1; })[0];
+      if (ord) { ui.orderFilter = 'todos'; ui.orderQ = ord.id; go('pedidos'); return { ok: true }; }
+      var nav = NAV[actor().role] || [];
+      var hit = nav.filter(function (n) { return n[1].toLowerCase().indexOf(q) !== -1 || n[0].indexOf(q) !== -1; })[0];
+      if (hit) { go(hit[0]); return { ok: true }; }
+      ui.catQ = q;
+      if (allowedPages(actor().role).indexOf('catalogo') !== -1) go('catalogo');
+      else { ui.stockQ = q; go('stock'); }
+      return { ok: true };
+    },
+    'wa-send': function (f) {
+      var t = (f.text || '').trim();
+      if (!t || !f.orgId) return { ok: false, message: 'Escribí un mensaje.' };
+      if (!ui.waMsgs) ui.waMsgs = {};
+      if (!ui.waMsgs[f.orgId]) ui.waMsgs[f.orgId] = [];
+      ui.waMsgs[f.orgId].push({ dir: 'out', at: 'Borrador local · ' + new Date().toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' }), text: t });
+      saveUi();
+      return { ok: true, summary: 'Borrador registrado (envío WhatsApp en preparación).' };
     },
     categoria: function (f) {
       return run('categoria.actualizar', { id: f.id, requiresExpiry: f.requiresExpiry === 'on', requiresDoc: f.requiresDoc === 'on', qualityNote: f.qualityNote });
@@ -1777,7 +2389,11 @@
   function confirmCart() {
     var c = cart();
     var lines = Object.keys(c.lines).map(function (sku) { return { sku: sku, qty: c.lines[sku] }; });
-    return run('pedido.guardarBorrador', { orderId: c.orderId, lines: lines, windowFrom: c.windowFrom || null, windowTo: c.windowTo || null, notes: c.notes }).then(function (saved) {
+    var payMethod = c.paymentMethod || 'sipap_qr';
+    return run('pedido.guardarBorrador', {
+      orderId: c.orderId, lines: lines, windowFrom: c.windowFrom || null, windowTo: c.windowTo || null, notes: c.notes,
+      deliveryAddress: c.address || '', deliveryZone: c.zone || '', deliverySlot: c.slot || '', paymentMethod: payMethod
+    }).then(function (saved) {
       if (!saved.ok) { render(); return cartError(saved.message); }
       c.orderId = saved.result.orderId;
       saveUi();
@@ -1786,10 +2402,11 @@
           render();
           return cartError(r.message + ' Quedó guardado como borrador ' + c.orderId + '.');
         }
+        var confirmedId = c.orderId;
         delete ui.carts[actor().orgId];
         saveUi();
         toast(r.summary);
-        go('mis-pedidos');
+        go((payMethod === 'contra_entrega' ? 'pedido-confirmado/' : 'pago/') + encodeURIComponent(confirmedId));
       });
     });
   }
@@ -1892,6 +2509,8 @@
       c.lines = {};
       o.lines.forEach(function (ln) { c.lines[ln.sku] = ln.qty; });
       c.orderId = o.id; c.windowFrom = o.windowFrom || ''; c.windowTo = o.windowTo || ''; c.notes = o.notes || '';
+      if (o.checkout) { c.address = o.checkout.address || ''; c.zone = o.checkout.zone || ''; c.slot = o.checkout.slot || c.slot; }
+      if (o.payment && o.payment.method) c.paymentMethod = o.payment.method;
       saveUi();
       go('mi-pedido');
     },
@@ -1926,6 +2545,27 @@
       }, true);
     },
     'filtro-pedidos': function (el) { ui.orderFilter = el.dataset.id; render(); },
+    'cat-filter': function (el) { ui.catFilter = el.dataset.id; render(); },
+    'wa-select': function (el) { ui.waThread = el.dataset.id; saveUi(); render(); },
+    'wa-quick': function (el) { var inp = $('wa-input'); if (inp) { inp.value = el.dataset.text || ''; inp.focus(); } },
+    'help-mod': function (el) { ui.helpMod = el.dataset.id; saveUi(); render(); },
+    'copiar-sipap': function (el) {
+      var code = el.dataset.code || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function () { toast('Código SIPAP copiado.'); }, function () { toast('Código: ' + code); });
+      } else toast('Código: ' + code);
+    },
+    'confirmar-pago': function (el) {
+      var o = D.byId(state.orders, el.dataset.id);
+      if (!o) return;
+      var pay = o.payment || {};
+      openDialog('Confirmar pago del pedido ' + o.id, '<p class="small muted">Verificá la acreditación en tu cuenta antes de confirmar. Quedará registrado en el historial.</p>' +
+        field('Forma de pago', select('method', Object.keys(D.PAYMENT_METHODS).map(function (k) { return [k, D.PAYMENT_METHODS[k]]; }), pay.method || 'sipap_qr')) +
+        field('Referencia / comprobante bancario', input('ref', 'text', pay.ref || '', 'placeholder="Ej. SPI-774912"'), 'Opcional'),
+        'Acreditar pago', function (f) {
+          return run('pedido.confirmarPago', { orderId: o.id, method: f.method, ref: f.ref });
+        });
+    },
     'anular-oferta': function (el) { act('oferta.anular', { id: el.dataset.id }); },
     'anular-demanda': function (el) { act('demanda.anular', { id: el.dataset.id }); },
     'lote-bloquear': function (el) { lotDialog('bloquear', el.dataset.id); },
@@ -2017,10 +2657,16 @@
     if (t.dataset.cartQty) return setCartQty(t.dataset.cartQty, Number(t.value));
     if (t.dataset.cartField) {
       cart()[t.dataset.cartField] = t.value;
-      return saveUi();
+      saveUi();
+      if (t.dataset.cartField === 'paymentMethod') render();
+      return;
     }
     if (t.dataset.change === 'mov-sku') {
       ui.movSku = t.value;
+      return render();
+    }
+    if (t.dataset.change === 'stock-cat') {
+      ui.stockCat = t.value;
       return render();
     }
     if (t.hasAttribute('data-unit-source')) {
@@ -2128,6 +2774,10 @@
   document.addEventListener('input', function (e) {
     if (e.target.id === 'shop-search') filterShop();
     if (e.target.id === 'np-search') filterDraft();
+    if (e.target.id === 'stock-search') { ui.stockQ = e.target.value; render(); var s = $('stock-search'); if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }
+    if (e.target.id === 'cat-search') { ui.catQ = e.target.value; render(); var c = $('cat-search'); if (c) { c.focus(); c.setSelectionRange(c.value.length, c.value.length); } }
+    if (e.target.id === 'order-search') { ui.orderQ = e.target.value; render(); var o = $('order-search'); if (o) { o.focus(); o.setSelectionRange(o.value.length, o.value.length); } }
+    if (e.target.id === 'help-search') { ui.helpQ = e.target.value; render(); var h = $('help-search'); if (h) { h.focus(); h.setSelectionRange(h.value.length, h.value.length); } }
     if (e.target.dataset && e.target.dataset.npField) {
       draft()[e.target.dataset.npField] = e.target.value;
       saveUi();

@@ -68,6 +68,16 @@
     liberacion_reserva: 'Liberación de reserva',
     salida: 'Salida'
   };
+  var PAYMENT_METHODS = {
+    sipap_qr: 'QR SIPAP / SPI',
+    transferencia: 'Transferencia bancaria',
+    contra_entrega: 'Pago contra entrega'
+  };
+  var PAYMENT_STATUS = {
+    pendiente: 'Pendiente de pago',
+    en_verificacion: 'Comprobante informado',
+    acreditado: 'Pago acreditado'
+  };
 
   var PERMISSIONS = {
     'producto.guardar': ['admin'],
@@ -92,6 +102,8 @@
     'pedido.entregar': ['operacion', 'comercial', 'admin'],
     'pedido.cancelar': ['almacen', 'operacion', 'comercial', 'admin'],
     'pedido.registrarFaltante': ['almacen', 'comercial', 'admin'],
+    'pedido.informarPago': ['almacen', 'comercial', 'admin'],
+    'pedido.confirmarPago': ['comercial', 'admin'],
     'usuario.credencial': ['admin', 'comercial', 'operacion', 'cooperativa', 'almacen'],
     'cooperativa.guardar': ['admin']
   };
@@ -829,6 +841,14 @@
         parts.push('Aviso de vencimiento: ' + d.settings.nearExpiryDays + ' → ' + p.nearExpiryDays + ' días');
         d.settings.nearExpiryDays = p.nearExpiryDays;
       }
+      ['sipapAlias', 'sipapBank', 'sipapHolder', 'sipapRuc', 'whatsappPhone'].forEach(function (k) {
+        if (k in p) {
+          var v = text(p[k]);
+          if (v.length > 120) fail('TEXTO_LARGO', 'El campo ' + k + ' admite hasta 120 caracteres.');
+          d.settings[k] = v;
+          parts.push(k + ' actualizado');
+        }
+      });
       return { summary: 'Configuración: ' + parts.join('; ') };
     },
 
@@ -1064,6 +1084,18 @@
       order.windowFrom = wf || wt;
       order.windowTo = wt || wf;
       order.notes = text(p.notes);
+      if (p.deliveryAddress || p.deliveryZone || p.deliverySlot || 'deliveryAddress' in p) {
+        order.checkout = {
+          address: text(p.deliveryAddress),
+          zone: text(p.deliveryZone),
+          slot: text(p.deliverySlot)
+        };
+      }
+      if (p.paymentMethod) {
+        if (!PAYMENT_METHODS[p.paymentMethod]) fail('VALOR_INVALIDO', 'Forma de pago desconocida.');
+        order.payment = order.payment || { method: p.paymentMethod, status: 'pendiente', ref: '', reportedAt: null, confirmedAt: null, confirmedBy: '' };
+        order.payment.method = p.paymentMethod;
+      }
       return { summary: 'Borrador ' + order.id + ' de ' + alm.name + ': ' + lines.length + ' producto(s).', result: { orderId: order.id } };
     },
 
@@ -1249,6 +1281,37 @@
       order.cancelReason = reason;
       setStatus(order, 'cancelado', ctx, reason);
       return { summary: 'Pedido ' + order.id + ' cancelado' + (reason ? '. Motivo: ' + reason : '') + '.' };
+    },
+
+    /** El cliente (o el equipo) informa que realizó la transferencia / QR SIPAP. Queda para verificación manual. */
+    'pedido.informarPago': function (d, ctx, p) {
+      var order = getOrder(d, ctx, p.orderId);
+      if (order.status === 'cancelado') fail('TRANSICION_INVALIDA', 'No se puede informar pago de un pedido cancelado.');
+      var method = p.method || (order.payment && order.payment.method) || 'sipap_qr';
+      if (!PAYMENT_METHODS[method]) fail('VALOR_INVALIDO', 'Forma de pago desconocida.');
+      var ref = text(p.ref);
+      order.payment = Object.assign({ method: method, status: 'pendiente', ref: '', reportedAt: null, confirmedAt: null, confirmedBy: '' }, order.payment || {});
+      order.payment.method = method;
+      if (order.payment.status !== 'acreditado') order.payment.status = 'en_verificacion';
+      if (ref) order.payment.ref = ref;
+      order.payment.reportedAt = ctx.nowIso;
+      return { summary: 'Pago informado en pedido ' + order.id + ' (' + PAYMENT_METHODS[method] + (ref ? ', ref. ' + ref : '') + '). Pendiente de verificación manual.' };
+    },
+
+    /** Confirmación manual del pago por Administración / Ventas. */
+    'pedido.confirmarPago': function (d, ctx, p) {
+      var order = getOrder(d, ctx, p.orderId);
+      if (order.status === 'cancelado') fail('TRANSICION_INVALIDA', 'No se puede acreditar pago de un pedido cancelado.');
+      var method = p.method || (order.payment && order.payment.method) || 'sipap_qr';
+      if (!PAYMENT_METHODS[method]) fail('VALOR_INVALIDO', 'Forma de pago desconocida.');
+      var ref = text(p.ref);
+      order.payment = Object.assign({ method: method, status: 'pendiente', ref: '', reportedAt: null, confirmedAt: null, confirmedBy: '' }, order.payment || {});
+      order.payment.method = method;
+      order.payment.status = 'acreditado';
+      if (ref) order.payment.ref = ref;
+      order.payment.confirmedAt = ctx.nowIso;
+      order.payment.confirmedBy = ctx.actorLabel;
+      return { summary: 'Pago acreditado en pedido ' + order.id + ' (' + PAYMENT_METHODS[method] + (ref ? ', ref. ' + ref : '') + ').' };
     }
   };
 
@@ -1744,7 +1807,7 @@
   return {
     SCHEMA_VERSION: SCHEMA_VERSION, APP_ID: APP_ID, DEFAULT_STORE_NAME: DEFAULT_STORE_NAME, slug: slug, hiddenFromStoreReason: hiddenFromStoreReason, UNITS: UNITS, ROLES: ROLES, ORDER_STATUS: ORDER_STATUS, ORDER_FLOW: ORDER_FLOW,
     TRANSITIONS: TRANSITIONS, PRODUCT_STATUS: PRODUCT_STATUS, OFFER_CONFIRMATION: OFFER_CONFIRMATION, OFFER_KIND: OFFER_KIND,
-    DEMAND_KIND: DEMAND_KIND, MOVEMENT_TYPES: MOVEMENT_TYPES, PERMISSIONS: PERMISSIONS,
+    DEMAND_KIND: DEMAND_KIND, MOVEMENT_TYPES: MOVEMENT_TYPES, PAYMENT_METHODS: PAYMENT_METHODS, PAYMENT_STATUS: PAYMENT_STATUS, PERMISSIONS: PERMISSIONS,
     emptyState: emptyState, execute: execute, can: can,
     toBaseQty: toBaseQty, isExpired: isExpired, lotAvailable: lotAvailable, fefoLots: fefoLots, stockSummary: stockSummary,
     availableInSaleUnits: availableInSaleUnits, notSellableReason: notSellableReason, priceIndicators: priceIndicators,

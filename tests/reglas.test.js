@@ -270,3 +270,36 @@ test('ficha de producto: descripción, foto y video se validan y llegan a la vit
   assert.equal(item.nextExpiry, D.addDays(TODAY, 40));
   assert.ok(!/costo|margen|pricing/i.test(JSON.stringify(item)));
 });
+
+test('checkout y pago SIPAP: dirección, forma de pago, aviso del cliente y confirmación manual por Administración', () => {
+  const w = world();
+  w.receive('R1', 12, 12, 90);
+  const b = w.ok(w.alm1, 'pedido.guardarBorrador', {
+    lines: [{ sku: SKU, qty: 2 }],
+    deliveryAddress: 'Av. España 1234',
+    deliveryZone: 'Las Mercedes',
+    deliverySlot: 'Mañana (08:00 a 12:00)',
+    paymentMethod: 'sipap_qr'
+  });
+  const oid = b.orderId;
+  w.ok(w.alm1, 'pedido.confirmar', { orderId: oid });
+  let ord = w.state.orders.find((o) => o.id === oid);
+  assert.equal(ord.checkout.address, 'Av. España 1234');
+  assert.equal(ord.checkout.zone, 'Las Mercedes');
+  assert.equal(ord.payment.method, 'sipap_qr');
+  assert.equal(ord.payment.status, 'pendiente');
+
+  // El cliente informa su transferencia pero no puede acreditarse a sí mismo.
+  w.ok(w.alm1, 'pedido.informarPago', { orderId: oid, ref: 'SPI-774912' });
+  ord = w.state.orders.find((o) => o.id === oid);
+  assert.equal(ord.payment.status, 'en_verificacion');
+  assert.equal(ord.payment.ref, 'SPI-774912');
+  assert.equal(w.run(w.alm1, 'pedido.confirmarPago', { orderId: oid }).code, 'SIN_PERMISO');
+
+  // Administración confirma el pago manualmente.
+  w.ok(w.admin, 'pedido.confirmarPago', { orderId: oid, ref: 'SPI-774912-OK' });
+  ord = w.state.orders.find((o) => o.id === oid);
+  assert.equal(ord.payment.status, 'acreditado');
+  assert.equal(ord.payment.ref, 'SPI-774912-OK');
+  assert.ok(ord.payment.confirmedAt);
+});
